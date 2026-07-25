@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="uk"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ліди · Захід + Центр — командний простір</title>
+<style>
+:root{
+ --txt:#37352f;--txt2:rgba(55,53,47,.65);--txt3:rgba(55,53,47,.45);
+ --bg:#fff;--side:#f7f7f5;--hover:rgba(55,53,47,.06);--hover2:rgba(55,53,47,.09);
+ --line:rgba(55,53,47,.09);--line2:rgba(55,53,47,.16);--acc:#2383e2;--accbg:#e7f1fb;
+ --green:#448361;--greenbg:#dbeddb;--red:#c4554d;--redbg:#ffe2dd;--amber:#cb912f;--amberbg:#fdecc8;
+}
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,"Apple Color Emoji",sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+input,select,textarea,button{font-family:inherit;font-size:14px;color:var(--txt)}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:rgba(55,53,47,.18);border-radius:6px;border:2px solid var(--bg)}
+.app{display:flex;height:100vh;overflow:hidden}
+/* sidebar */
+.side{width:255px;flex:0 0 255px;background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:10px 8px;overflow-y:auto}
+.ws{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-weight:600;margin-bottom:6px}
+.ws .logo{width:22px;height:22px;border-radius:5px;background:linear-gradient(135deg,#2383e2,#448361);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px}
+.ws small{display:block;font-weight:400;color:var(--txt3);font-size:11px}
+.me{display:flex;align-items:center;gap:8px;padding:7px 8px;border:1px solid var(--line2);border-radius:8px;background:var(--bg);cursor:pointer;margin-bottom:6px;position:relative}
+.me:hover{background:var(--hover)}
+.me .who{flex:1;min-width:0}
+.me .who b{font-size:13px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.me .who small{color:var(--txt3);font-size:11px}
+.me .caret{color:var(--txt3);font-size:11px}
+.medrop{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg);border:1px solid var(--line2);border-radius:8px;box-shadow:0 6px 20px rgba(15,15,15,.14);z-index:40;padding:5px;display:none}
+.medrop.show{display:block}
+.medrop .mi{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:13px}
+.medrop .mi:hover{background:var(--hover)}
+.navlbl{font-size:11px;color:var(--txt3);font-weight:600;padding:12px 8px 4px;text-transform:uppercase;letter-spacing:.03em}
+.nav{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:6px;cursor:pointer;color:var(--txt2);user-select:none}
+.nav:hover{background:var(--hover)}
+.nav.on{background:var(--hover2);color:var(--txt);font-weight:500}
+.nav .ic{width:18px;text-align:center;font-size:15px;flex:0 0 18px}
+.nav .badge{margin-left:auto;background:var(--red);color:#fff;font-size:11px;font-weight:600;border-radius:10px;padding:0 6px;min-width:18px;text-align:center}
+.nav .cnt{margin-left:auto;color:var(--txt3);font-size:12px}
+.stagedot{width:9px;height:9px;border-radius:3px;flex:0 0 9px}
+.side .tools{margin-top:auto;padding-top:10px;border-top:1px solid var(--line)}
+.side .tools .nav{font-size:13px}
+.cloudpill{font-size:10.5px;padding:2px 7px;border-radius:10px;margin-left:6px;font-weight:600}
+.cloudpill.on{background:var(--greenbg);color:var(--green)}.cloudpill.off{background:var(--hover2);color:var(--txt2)}
+/* main */
+.main{flex:1;overflow-y:auto;position:relative}
+.topbar{position:sticky;top:0;background:var(--bg);z-index:15;padding:14px 40px 0}
+.crumb{color:var(--txt3);font-size:12.5px;margin-bottom:8px}
+.pagetitle{font-size:30px;font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:10px;margin:0 0 2px}
+.pagesub{color:var(--txt2);font-size:13.5px;margin-bottom:14px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.search{display:flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--line2);border-radius:7px;padding:5px 9px;min-width:210px;flex:1;max-width:340px}
+.search input{border:0;outline:0;background:transparent;flex:1;padding:0}
+.search .ic{color:var(--txt3)}
+.filt{background:var(--bg);border:1px solid var(--line2);border-radius:7px;padding:6px 9px;color:var(--txt2);cursor:pointer;outline:0}
+.chkbox{display:flex;align-items:center;gap:6px;color:var(--txt2);font-size:13px;cursor:pointer;padding:0 4px}
+.count{color:var(--txt3);font-size:12.5px;margin-left:auto;white-space:nowrap}
+.content{padding:16px 40px 70px}
+.btn{background:var(--bg);border:1px solid var(--line2);border-radius:7px;padding:6px 11px;cursor:pointer;color:var(--txt);font-size:13px;font-weight:500;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:var(--hover)}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:#fff}.btn.pri:hover{background:#1a6fc4}
+.btn.sm{padding:4px 9px;font-size:12px}
+.btn.g{background:#25b34b;border-color:#25b34b;color:#fff}.btn.call{background:#3b82f6;border-color:#3b82f6;color:#fff}
+.btn.v{background:#7360f2;border-color:#7360f2;color:#fff}.btn.w{background:#25d366;border-color:#25d366;color:#fff}
+.btn.dng{color:var(--red);border-color:var(--redbg)}.btn.dng:hover{background:var(--redbg)}
+/* avatars */
+.av{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;flex:0 0 22px}
+.av.sm{width:18px;height:18px;font-size:10px;flex:0 0 18px}
+.av.lg{width:30px;height:30px;font-size:13px;flex:0 0 30px}
+.av.none{background:var(--hover2);color:var(--txt3);font-weight:400}
+/* pills */
+.stg{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:2px 8px;border-radius:5px;white-space:nowrap}
+.stg .d{width:7px;height:7px;border-radius:2px}
+.tag{display:inline-block;font-size:12px;padding:1px 7px;border-radius:5px;background:var(--hover2);color:var(--txt2)}
+.due{font-size:12.5px;white-space:nowrap;color:var(--txt2)}
+.due.over{color:var(--red);font-weight:600}.due.today{color:var(--amber);font-weight:600}
+.amt{font-weight:600;white-space:nowrap}.mut{color:var(--txt3)}
+/* table */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;font-size:12px;font-weight:500;color:var(--txt2);padding:7px 10px;border-bottom:1px solid var(--line);position:sticky;top:118px;background:var(--bg);z-index:8}
+.tbl td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tr:hover td{background:var(--hover)}.tbl tbody tr{cursor:pointer}
+.tbl .n{color:var(--txt3);width:28px;font-size:12px}
+.cellname{font-weight:500}.cellname:hover{text-decoration:underline}
+.subname{color:var(--txt3);font-size:12px}
+.gopen{color:var(--txt3);font-size:12px;opacity:0;margin-left:6px}.tbl tr:hover .gopen{opacity:1}
+/* metrics/funnel */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px}
+.metric{border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.metric .lbl{color:var(--txt2);font-size:12.5px;margin-bottom:6px}
+.metric .val{font-size:26px;font-weight:700;letter-spacing:-.01em}
+.metric .val.g{color:var(--green)}.metric .val.r{color:var(--red)}.metric .val.a{color:var(--amber)}.metric .val.b{color:var(--acc)}
+.sect{font-size:15px;font-weight:600;margin:22px 0 12px}
+.funnel{display:flex;flex-direction:column;gap:8px;max-width:660px}
+.frow{display:flex;align-items:center;gap:12px;cursor:pointer}
+.frow .fl{width:130px;font-size:13px;color:var(--txt2);display:flex;align-items:center;gap:7px}
+.frow .ft{flex:1;height:26px;background:var(--hover);border-radius:6px;overflow:hidden}
+.frow .fb{height:100%;border-radius:6px;min-width:2px}
+.frow .fc{width:140px;text-align:right;font-size:12.5px;color:var(--txt2);white-space:nowrap}.frow .fc b{color:var(--txt)}
+/* queue */
+.queue{display:flex;flex-direction:column;gap:8px;max-width:860px}
+.qcard{border:1px solid var(--line);border-radius:9px;padding:11px 14px;display:flex;align-items:center;gap:14px;cursor:pointer}
+.qcard:hover{background:var(--hover);border-color:var(--line2)}
+.qcard.over{border-left:3px solid var(--red)}.qcard.today{border-left:3px solid var(--amber)}
+.qcard .qmain{flex:1;min-width:0}.qcard .qn{font-weight:600}.qcard .qmeta{color:var(--txt3);font-size:12.5px}
+.qcard .qact{color:var(--txt2);font-size:13px}
+.qhead{font-size:13px;color:var(--txt2);font-weight:600;margin:16px 0 8px;display:flex;align-items:center;gap:8px}
+.qhead .qc{background:var(--hover2);border-radius:10px;padding:0 8px;font-size:12px}
+.empty{color:var(--txt3);font-size:14px;padding:30px;text-align:center;border:1px dashed var(--line2);border-radius:10px}
+/* board */
+.board{display:flex;gap:12px;overflow-x:auto;padding-bottom:12px}
+.col{width:250px;flex:0 0 250px;display:flex;flex-direction:column}
+.colh{display:flex;align-items:center;gap:7px;padding:4px 4px 8px;font-size:13px;font-weight:500;color:var(--txt2)}
+.colh .cc{color:var(--txt3);font-weight:400}.colh .cs{margin-left:auto;color:var(--green);font-size:12px;font-weight:600}
+.colb{display:flex;flex-direction:column;gap:8px;background:var(--side);border-radius:9px;padding:8px;min-height:60px;flex:1}
+.col.dragover .colb{background:var(--accbg);outline:2px dashed var(--acc);outline-offset:-3px}
+.kcard{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;cursor:grab;box-shadow:0 1px 2px rgba(15,15,15,.04)}
+.kcard:hover{border-color:var(--line2)}.kcard:active{cursor:grabbing}
+.kcard .kn{font-weight:600;line-height:1.3;margin-bottom:3px}.kcard .km{color:var(--txt3);font-size:12px}
+.kcard .kb{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:6px}
+.kcard .ktitle{font-weight:600;line-height:1.3}
+.kcard .klead{color:var(--acc);font-size:12px;margin-top:2px}
+/* team */
+.tcard{border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tcard .tstat{text-align:center;min-width:70px}.tcard .tstat b{font-size:18px;display:block}.tcard .tstat span{font-size:11px;color:var(--txt2)}
+.addrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+/* panel */
+#ovl{position:fixed;inset:0;background:rgba(15,15,15,.32);opacity:0;pointer-events:none;transition:opacity .18s;z-index:90}
+#ovl.show{opacity:1;pointer-events:auto}
+#panel{position:fixed;top:0;right:0;height:100%;width:min(720px,94vw);background:var(--bg);box-shadow:-3px 0 24px rgba(15,15,15,.14);transform:translateX(101%);transition:transform .22s cubic-bezier(.32,.72,0,1);z-index:95;overflow-y:auto}
+#panel.show{transform:none}
+.phead{position:sticky;top:0;background:var(--bg);display:flex;align-items:center;gap:10px;padding:12px 22px;border-bottom:1px solid var(--line);z-index:5}
+.phead .x{margin-left:auto;background:transparent;border:0;color:var(--txt2);cursor:pointer;font-size:18px;width:30px;height:30px;border-radius:6px}.phead .x:hover{background:var(--hover)}
+.pbody{padding:12px 32px 60px}
+.ptitle{font-size:26px;font-weight:700;letter-spacing:-.01em;margin:8px 0 4px}
+.pmeta{color:var(--txt2);font-size:13px;margin-bottom:14px}
+.qacts{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+.props{display:flex;flex-direction:column;gap:2px;margin-bottom:18px}
+.prop{display:flex;align-items:flex-start;gap:10px;min-height:34px;padding:3px 0}
+.prop .pk{width:150px;flex:0 0 150px;color:var(--txt2);font-size:13px;display:flex;align-items:center;gap:7px;padding-top:6px}
+.prop .pv{flex:1}
+.prop .pv input,.prop .pv select{width:100%;border:1px solid transparent;border-radius:6px;padding:5px 8px;background:transparent}
+.prop .pv input:hover,.prop .pv select:hover{background:var(--hover)}
+.prop .pv input:focus,.prop .pv select:focus{background:var(--bg);border-color:var(--acc);outline:0}
+.stgpick{display:flex;flex-wrap:wrap;gap:5px}
+.stgpick button{border:1px solid var(--line2);background:var(--bg);border-radius:6px;padding:3px 9px;font-size:12.5px;cursor:pointer;color:var(--txt2);display:inline-flex;align-items:center;gap:5px}
+.stgpick button:hover{background:var(--hover)}.stgpick button.on{font-weight:600;border-color:transparent}
+.block{border:1px solid var(--line);border-radius:9px;padding:12px 14px;margin-bottom:12px}
+.block h4{margin:0 0 8px;font-size:12px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.03em}
+.block .body{white-space:pre-wrap;font-size:13.5px;line-height:1.55}
+.logbtns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+textarea.note{width:100%;min-height:54px;border:1px solid var(--line2);border-radius:7px;padding:8px;resize:vertical;outline:0}textarea.note:focus{border-color:var(--acc)}
+.notes{display:flex;flex-direction:column;gap:7px;margin-top:10px}
+.note{background:var(--side);border-radius:7px;padding:7px 10px;font-size:13px}
+.note .t{color:var(--txt3);font-size:11.5px;margin-bottom:2px}
+.note .del{float:right;color:var(--txt3);cursor:pointer}.note .del:hover{color:var(--red)}
+.subtasks{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.subtask{display:flex;align-items:center;gap:8px;font-size:13px;background:var(--side);border-radius:7px;padding:6px 9px}
+.subtask.done .st-title{text-decoration:line-through;color:var(--txt3)}
+.subtask .st-title{flex:1}
+/* modal (new task) */
+#tmodal{position:fixed;inset:0;background:rgba(15,15,15,.4);display:none;align-items:center;justify-content:center;z-index:120;padding:20px}
+#tmodal.show{display:flex}
+.tbox{background:var(--bg);border-radius:12px;padding:18px 20px;width:min(460px,96vw);box-shadow:0 12px 40px rgba(15,15,15,.2)}
+.tbox h3{margin:0 0 12px}
+.tbox .fld{margin-bottom:10px}
+.tbox label{display:block;font-size:12px;color:var(--txt2);margin-bottom:4px}
+.tbox input,.tbox select{width:100%;border:1px solid var(--line2);border-radius:7px;padding:7px 9px;outline:0}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#37352f;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;z-index:200;pointer-events:none}
+.toast.show{opacity:1}
+.hidden{display:none!important}.menu-toggle{display:none}
+@media(max-width:900px){
+ .side{position:fixed;left:0;top:0;bottom:0;z-index:60;transform:translateX(-101%);transition:transform .2s}.side.open{transform:none}
+ .topbar,.content{padding-left:16px;padding-right:16px}.menu-toggle{display:inline-flex}.det-col{display:none}
+}
+</style></head>
+<body>
+<div class="app">
+ <aside class="side" id="side">
+   <div class="ws"><span class="logo">Л</span><div>Ліди · Захід+Центр<small>командний простір<span class="cloudpill off" id="cloudPill">локально</span></small></div></div>
+   <div class="me" id="meBtn"><span id="meAv"></span><div class="who" id="meWho"><b>Обери себе</b><small>натисни, щоб увійти</small></div><span class="caret">▾</span>
+     <div class="medrop" id="meDrop"></div>
+   </div>
+   <div class="navlbl">Вигляди</div>
+   <div class="nav on" data-view="dashboard"><span class="ic">📊</span>Дашборд</div>
+   <div class="nav" data-view="today"><span class="ic">🔥</span>Сьогодні<span class="badge" id="dueBadge">0</span></div>
+   <div class="nav" data-view="tasks"><span class="ic">✅</span>Задачі<span class="cnt" id="taskCnt"></span></div>
+   <div class="nav" data-view="table"><span class="ic">📋</span>Усі ліди<span class="cnt" id="allCnt"></span></div>
+   <div class="nav" data-view="board"><span class="ic">🗂️</span>Дошка лідів</div>
+   <div class="nav" data-view="team"><span class="ic">👥</span>Команда<span class="cnt" id="teamCnt"></span></div>
+   <div class="navlbl">Етапи воронки</div>
+   <div id="stageNav"></div>
+   <div class="tools">
+     <div class="nav" id="expBtn"><span class="ic">⬇️</span>Експорт (бекап)</div>
+     <div class="nav" id="impBtn"><span class="ic">⬆️</span>Імпорт</div>
+     <div class="nav" id="csvBtn"><span class="ic">📄</span>CSV-звіт</div>
+     <input type="file" id="impFile" accept="application/json" class="hidden">
+   </div>
+ </aside>
+
+ <main class="main" id="main">
+   <div class="topbar">
+     <div class="crumb"><button class="btn sm menu-toggle" id="menuBtn" style="margin-right:8px">☰</button><span id="crumb">Робочий простір / Дашборд</span></div>
+     <h1 class="pagetitle" id="pageTitle">📊 Дашборд</h1>
+     <div class="pagesub" id="pageSub"></div>
+     <div class="toolbar" id="toolbar">
+       <div class="search"><span class="ic">🔍</span><input id="q" placeholder="Пошук…"></div>
+       <select class="filt" id="region"></select>
+       <select class="filt" id="city"></select>
+       <select class="filt" id="niche"></select>
+       <select class="filt" id="assignee"></select>
+       <select class="filt" id="sort">
+         <option value="stage">Сортувати: за етапом</option>
+         <option value="due">За дедлайном</option>
+         <option value="rev">За відгуками</option>
+         <option value="amt">За сумою</option>
+         <option value="name">За назвою</option>
+       </select>
+       <label class="chkbox"><input type="checkbox" id="onlyMine">тільки мої</label>
+       <span class="count" id="count"></span>
+     </div>
+   </div>
+   <div class="content" id="content"></div>
+ </main>
+</div>
+
+<div id="ovl"></div>
+<div id="panel"><div class="phead"><span class="stg" id="pStage"></span><button class="x" id="pClose">✕</button></div><div class="pbody" id="pbody"></div></div>
+<div id="tmodal"><div class="tbox"><h3>Нова задача</h3>
+  <div class="fld"><label>Що зробити</label><input id="tTitle" placeholder="напр. Передзвонити клієнту"></div>
+  <div class="fld"><label>Виконавець</label><select id="tAssignee"></select></div>
+  <div class="fld"><label>Дедлайн</label><input id="tDue" type="date"></div>
+  <div class="fld"><label>Привʼязати до ліда (необовʼязково)</label><select id="tLead"></select></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px"><button class="btn" id="tCancel">Скасувати</button><button class="btn pri" id="tSave">Створити</button></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const DATA = [{"name": "Стоматологія Slivko Dental", "city": "Умань", "phone": "+380 68 624 2879", "niche": "Стоматологія", "site": "Лише Instagram", "rev": 335, "details": "Стоматологічна клініка · вул. Івана Гонти, 42 · 4.8 (335 відгуків) · хірургія, імплантація, чистка, видалення зубів мудрості · хірург Бабич Артур Володимирович · пацієнти приходять із соцмереж", "prompt": "Створи сайт-конвертер для стоматології Slivko Dental (Умань, вул. Івана Гонти 42), яка зараз працює лише через Instagram, але вже має 335 відгуків 4.8★. Мета — перетворити інстаграм-аудиторію на записи через сайт. Перший екран: «Slivko Dental — стоматологія в Умані, якій довіряють понад 335 пацієнтів» + кнопка «Записатися». Секції: імплантація та складна хірургія (винеси окремо — це сильна сторона, хірург Бабич Артур Володимирович, кейси видалення складних зубів), терапія, чистка, дитячий прийом; блок «до/після» імплантів; окремий блок довіри «335 відгуків 4.8★»; фото клініки; онлайн-запис + телефон +380 68 624 2879, кнопка Instagram, карта. Стиль: сучасний, преміальний медичний. Мова: українська. Sticky-запис, підтягни фото з Instagram.", "region": "Центр"}, {"name": "Стоматологія ЛАДЕНТ", "city": "Умань", "phone": "+380 73 022 9872", "niche": "Стоматологія", "site": "Лише Instagram", "rev": 180, "details": "Стоматолог · вул. Велика Фонтанна, 7 · 4.5 (180 відгуків) · імпланти, коронки в колір власних зубів · присутність лише в Instagram", "prompt": "Створи лендінг для стоматології ЛАДЕНТ (Умань, вул. Велика Фонтанна 7) — зараз лише Instagram, 180 відгуків 4.5★. Мета — записи на прийом. Зроби акцент на естетиці й імплантації: оффер «Природна усмішка — імпланти та коронки, непомітні від власних зубів» + «Записатися». Секції: імплантація, протезування, естетична реставрація, терапія, гігієна; галерея робіт «до/після»; блок «180 задоволених пацієнтів»; онлайн-запис + телефон +380 73 022 9872, Instagram, карта. Стиль: чистий, довірливий, білі/бірюзові тони. Мова: українська. Sticky-кнопка запису.", "region": "Центр"}, {"name": "Центр естетичної стоматології та імплантації Мирошниченко (M clinic)", "city": "Умань", "phone": "+380 97 691 9636", "niche": "Стоматологія", "site": "Немає", "rev": 73, "details": "Стоматологічна клініка · вул. Європейська, 62 · 4.7 (73 відгуки) · естетична стоматологія + імплантація (авторський центр Мирошниченка)", "prompt": "Створи преміальний сайт для авторського «Центру естетичної стоматології та імплантації Мирошниченка / M clinic» (Умань, вул. Європейська 62), 4.7★ (73). Мета — записи на консультацію з естетики та імплантації. Оффер «Естетична стоматологія та імплантація в Умані — авторський підхід лікаря Мирошниченка» + «Записатися на консультацію». Секції: імплантація «під ключ», вініри та реставрація усмішки, All-on-4/6, протезування; блок про лікаря-засновника; кейси «до/після»; відгуки; онлайн-запис + телефон +380 97 691 9636, карта. Стиль: дорогий, мінімалістичний, акцент на естетиці. Мова: українська. Sticky-запис.", "region": "Центр"}, {"name": "«М'ята» — стоматологія", "city": "Кременчук", "phone": "+380 67 610 9797", "niche": "Стоматологія", "site": "Немає", "rev": 316, "details": "Стоматологічна клініка · вул. Івана Мазепи, 57 · 4.8 (316 відгуків) · чистка, лікування, комплексний догляд · сильна репутація, але без сайту", "prompt": "Створи сайт для стоматології «М'ята» (Кременчук, вул. Івана Мазепи 57) — 316 відгуків 4.8★, але сайту немає. Мета — записи. Оффер «Стоматологія «М'ята» — свіжий підхід до здоров'я зубів у Кременчуці» + «Записатися на прийом». Обіграй назву «М'ята» у візуальному стилі (свіжа м'ятно-біла палітра). Секції: терапія, гігієна та чистка, імплантація, протезування, ортодонтія, дитячий прийом; блок «316 відгуків 4.8★»; фото клініки; відгуки; онлайн-запис + телефон +380 67 610 9797, карта. Мова: українська. Sticky-запис, мікророзмітка.", "region": "Центр"}, {"name": "Стоматологія «Дентаріс»", "city": "Кременчук", "phone": "+380 96 299 5351", "niche": "Стоматологія", "site": "Немає", "rev": 155, "details": "Стоматологічна клініка · Першотравнева, 40 · 4.5 (155 відгуків) · естетика посмішки, повернення впевненості", "prompt": "Створи сайт для стоматології «Дентаріс» (Кременчук, Першотравнева 40), 4.5★ (155), без сайту. Мета — записи. Оффер довкола емоції: «Посмішка, якою хочеться ділитися — «Дентаріс», Кременчук» + «Записатися». Секції: естетична реставрація та відбілювання, імплантація, протезування, терапія, гігієна; блок «до/після» усмішок; відгуки (155, 4.5★); онлайн-запис + телефон +380 96 299 5351, карта. Стиль: світлий, естетичний, «lifestyle»-фото. Мова: українська. Sticky-запис.", "region": "Центр"}, {"name": "ProfiDent", "city": "Кременчук", "phone": "+380 68 230 4848", "niche": "Стоматологія", "site": "Немає", "rev": 26, "details": "Стоматологічна клініка · вул. Київська, 65/2 · 5.0 (26 відгуків) · сучасний підхід, детальні консультації", "prompt": "Створи сайт для стоматології ProfiDent (Кременчук, вул. Київська 65/2) — 5.0★ (26), без сайту. Мета — записи. Оффер «ProfiDent — професійна стоматологія у Кременчуці, де все пояснять» + «Записатися». Секції: терапія, імплантація, протезування, гігієна, ортодонтія; акцент на прозорих консультаціях і плані лікування; відгуки 5.0★; онлайн-запис + телефон +380 68 230 4848, карта. Стиль: чистий медичний, синьо-білий. Мова: українська. Sticky-запис.", "region": "Центр"}, {"name": "Сімейна стоматологія (Тарковського)", "city": "Кропивницький", "phone": "+380 95 937 0569", "niche": "Стоматологія", "site": "Немає", "rev": 48, "details": "Стоматологічна клініка · Арсенія Тарковського, 68 · 4.7 (48 відгуків) · сімейний формат, імплантація (лікар Володимир)", "prompt": "Створи сайт для «Сімейної стоматології» (Кропивницький, Арсенія Тарковського 68), 4.7★ (48), без сайту. Мета — записи всієї родини. Оффер «Сімейна стоматологія у Кропивницькому — для дорослих і дітей» + «Записатися». Секції: дорослий і дитячий прийом, імплантація (виділи як сильну сторону, лікар Володимир), протезування, терапія, гігієна; відгуки; онлайн-запис + телефон +380 95 937 0569, карта. Стиль: теплий, сімейний, світлі тони. Мова: українська. Sticky-запис.", "region": "Центр"}, {"name": "Стоматологія «Одонт»", "city": "Кропивницький", "phone": "+380 95 886 1533", "niche": "Стоматологія", "site": "Немає", "rev": 114, "details": "Стоматолог · вул. Віктора Чміленка, 106 · 4.2 (114 відгуків) · дбайливе лікування, збереження кожного зуба", "prompt": "Створи сайт для стоматології «Одонт» (Кропивницький, вул. Віктора Чміленка 106) — 114 відгуків 4.2★, без сайту. Мета — записи. Оффер «Одонт — дбайлива стоматологія, що зберігає ваші зуби» + «Записатися». Секції: зубозберігаюче лікування, ендодонтія (лікування каналів), імплантація, протезування, гігієна; блок довіри «114 відгуків»; відгуки; онлайн-запис + телефон +380 95 886 1533, карта. Стиль: спокійний медичний, м'які тони. Мова: українська. Sticky-запис.", "region": "Центр"}, {"name": "Dr. Shlewit — стоматологічна клініка", "city": "Біла Церква", "phone": "+380 98 733 1132", "niche": "Стоматологія", "site": "Немає", "rev": 92, "details": "Стоматологічна клініка · бульвар Олександрійський, 60 · 5.0 (92 відгуки) · швидко, якісно, безболісно", "prompt": "Створи сайт для авторської клініки «Dr. Shlewit» (Біла Церква, бульвар Олександрійський 60) — 5.0★ (92), без сайту. Мета — записи. Оффер «Dr. Shlewit — стоматологія без болю у Білій Церкві» + «Записатися». Секції: безболісне лікування/седація, імплантація, естетика, протезування, гігієна; блок про лікаря-засновника; відгуки 5.0★; онлайн-запис + телефон +380 98 733 1132, карта. Стиль: сучасний, преміальний, персональний бренд лікаря. Мова: українська. Sticky-запис.", "region": "Центр"}, {"name": "Стоматологія «Тридент»", "city": "Ніжин", "phone": "+380 68 152 3402", "niche": "Стоматологія", "site": "Немає", "rev": 1035, "details": "Стоматологічна клініка · вул. Об'їзна, 116/6 · 4.9 (1035 відгуків!) · лідер міста, лікар Рафаель Шафаєвич · сайту немає", "prompt": "Створи сайт для стоматології «Тридент» (Ніжин, вул. Об'їзна 116/6) — беззаперечний лідер міста: 1035 відгуків 4.9★, але сайту немає. Мета — записи й закріплення статусу №1. Оффер «Тридент — стоматологія №1 у Ніжині за відгуками пацієнтів» + «Записатися». Секції: повний спектр (терапія, хірургія, імплантація, ортодонтія, протезування, дитяча), команда лікарів (виділи Рафаеля Шафаєвича), сучасне обладнання; великий блок соц-доказу «1035 відгуків 4.9★»; кейси; онлайн-запис + телефон +380 68 152 3402, карта. Стиль: солідний, преміальний. Мова: українська. Sticky-запис, мікророзмітка.", "region": "Центр"}, {"name": "Стоматологія «Естелайт» (Estelite)", "city": "Ніжин", "phone": "+380 98 643 1088", "niche": "Стоматологія", "site": "Немає", "rev": 45, "details": "Стоматологічна клініка · вул. Станіслава Прощенка, 14А · 5.0 (45 відгуків) · нове обладнання, стерильність, турботливий персонал", "prompt": "Створи сайт для стоматології «Естелайт» (Ніжин, вул. Станіслава Прощенка 14А) — 5.0★ (45), без сайту. Мета — записи. Оффер «Естелайт — сучасна стоматологія у Ніжині з бездоганною стерильністю» + «Записатися». Секції: терапія, естетична реставрація, імплантація, протезування, гігієна; акцент на новому обладнанні та стерильності; відгуки 5.0★; онлайн-запис + телефон +380 98 643 1088, карта. Стиль: світлий, «клінічно чистий», акцентний колір. Мова: українська. Sticky-запис.", "region": "Центр"}, {"name": "Меблі на замовлення «Ваш дім»", "city": "Полтава", "phone": "+380 63 600 3319", "niche": "Меблі/кухні на замовлення", "site": "Лише Instagram", "rev": 111, "details": "Виробник меблів · вул. Довженка, 1 · 5.0 (111 відгуків) · кухні, шафи-купе, дитячі, спальні, передпокої · клієнти приходять з реклами в Instagram · дизайнер Оксана", "prompt": "Створи преміальний сайт для меблевої компанії «Ваш дім» (Полтава, вул. Довженка 1), яка зараз працює лише через Instagram, але має 111 відгуків 5.0★ і клієнтів із таргету. Мета — заявки на замір і 3D-проєкт напряму з сайту. Оффер «Ваш дім — меблі на замовлення, що облаштовують оселю під ключ» + «Безкоштовний 3D-проєкт». Секції: кухні, шафи-купе, дитячі, спальні, передпокої, меблі для ванної; велика галерея реалізованих кімнат (підтягни з Instagram); процес (замір → 3D від дизайнера Оксани → виробництво → монтаж); блок «111 відгуків 5.0★»; форма + телефон +380 63 600 3319, Instagram, карта. Стиль: дорогий, глянцевий, теплі фото інтер'єрів. Мова: українська. Sticky-кнопка.", "region": "Центр"}, {"name": "Стоматологія «Гіппократ»", "city": "Вінниця", "phone": "+380 98 887 6688", "niche": "Стоматологія", "site": "Немає", "rev": 436, "details": "Стоматологічна клініка · вул. Зодчих, 20 · 4.8 (436 відгуків) · гігієна та чистка, терапія · лікар Андрій Миколайович · сайту немає", "prompt": "Створи сайт для стоматології «Гіппократ» (Вінниця, вул. Зодчих 20) — 436 відгуків 4.8★, без сайту. Мета — записи. Оффер «Гіппократ — стоматологія у Вінниці, якій довіряють 400+ пацієнтів» + «Записатися». Секції: професійна гігієна та чистка (сильна сторона), терапія, імплантація, протезування, ортодонтія, дитячий прийом; команда (виділи терапевта Андрія Миколайовича); блок «436 відгуків 4.8★»; онлайн-запис + телефон +380 98 887 6688, карта. Стиль: солідний медичний, білі/сині тони. Мова: українська. Sticky-запис.", "region": "Центр"}, {"name": "Стоматологія «Одонтопрактика»", "city": "Полтава", "phone": "+380 97 876 4390", "niche": "Стоматологія", "site": "Немає", "rev": 52, "details": "Стоматологічна клініка · вул. Конституції, 11А · 4.5 (52 відгуки) · імпланти, знімки/діагностика, «все в одному місці»", "prompt": "Створи сайт для стоматології «Одонтопрактика» (Полтава, вул. Конституції 11А) — 4.5★ (52), без сайту. Мета — записи. Оффер «Одонтопрактика — стоматологія повного циклу в Полтаві: діагностика, лікування, імплантація в одному місці» + «Записатися». Секції: власна діагностика (КТ/знімки), імплантація, протезування, терапія, гігієна; акцент «усе в одному місці, без направлень»; відгуки; онлайн-запис + телефон +380 97 876 4390, карта. Стиль: сучасний медичний. Мова: українська. Sticky-запис.", "region": "Центр"}, {"region": "Захід", "name": "Комод (кухні, шафи-купе, меблі на замовлення)", "city": "Тернопіль", "phone": "+380 98 476 9399", "niche": "Меблі/кухні на замовлення", "details": "Меблі/кухні на замовлення · вул. Лозовецька, 3а · рейтинг 5.0 (1) відгуків", "site": "Немає", "rev": 1, "prompt": "Контекст: бізнес у м. Тернопіль, рейтинг 5.0 (1) (1 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи преміальний продаючий лендінг для виробника меблів на замовлення «Комод» (Тернопіль, вул. Лозовецька, 3а). Ніша: кухні, шафи-купе, гардеробні, корпусні меблі за індивідуальним проєктом. Мета — заявки на замір і 3D-проєкт. Структура: 1) оффер «Меблі мрії на замовлення — індивідуальний проєкт, монтаж під ключ» + «Безкоштовний 3D-проєкт»; 2) категорії меблів; 3) велика галерея робіт; 4) процес (замір → 3D → виробництво → монтаж); 5) переваги (власне виробництво, фурнітура Blum, терміни, гарантія); 6) відгуки; 7) форма + телефон +380 98 476 9399, месенджери/Instagram, адреса. Стиль: дорогий, глянцевий, великі фото, тепла палітра. Мова: українська. Sticky-кнопка дзвінка."}, {"region": "Захід", "name": "Дім Сервіс", "city": "Рівне", "phone": "+380 98 843 3183", "niche": "Ремонт під ключ", "details": "Ремонт під ключ · вул. Клима Савура, 14А · рейтинг 5.0 (4) відгуків", "site": "Немає", "rev": 4, "prompt": "Контекст: бізнес у м. Рівне, рейтинг 5.0 (4) (4 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи продаючий лендінг для компанії «Дім Сервіс» (Рівне, вул. Клима Савура, 14А) — ремонт квартир під ключ. Мета — заявки на кошторис і замір. Структура: 1) оффер «Ремонт квартири під ключ — ціна зафіксована в договорі, здаємо в строк» + «Розрахувати вартість»; 2) послуги (косметичний, капітальний, дизайнерський ремонт, комерційні приміщення); 3) портфоліо «до/після»; 4) етапи і що входить у ціну; 5) гарантії, договір, прозорий кошторис; 6) відгуки; 7) форма + телефон +380 98 843 3183, месенджери. Стиль: надійний, сині/графітові тони. Мова: українська. Калькулятор вартості за м², sticky-дзвінок."}, {"region": "Захід", "name": "Ремонт квартир — РемКвартБуд", "city": "Луцьк", "phone": "+380 96 099 0364", "niche": "Ремонт під ключ", "details": "Ремонт під ключ · вул. Наливайка, 2 · рейтинг 5.0 (1) відгуків", "site": "Немає", "rev": 1, "prompt": "Контекст: бізнес у м. Луцьк, рейтинг 5.0 (1) (1 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи продаючий лендінг для компанії «Ремонт квартир — РемКвартБуд» (Луцьк, вул. Наливайка, 2) — ремонт квартир під ключ. Мета — заявки на кошторис і замір. Структура: 1) оффер «Ремонт квартири під ключ — ціна зафіксована в договорі, здаємо в строк» + «Розрахувати вартість»; 2) послуги (косметичний, капітальний, дизайнерський ремонт, комерційні приміщення); 3) портфоліо «до/після»; 4) етапи і що входить у ціну; 5) гарантії, договір, прозорий кошторис; 6) відгуки; 7) форма + телефон +380 96 099 0364, месенджери. Стиль: надійний, сині/графітові тони. Мова: українська. Калькулятор вартості за м², sticky-дзвінок."}, {"region": "Захід", "name": "Натяжні стелі «Купідон»", "city": "Хмельницький", "phone": "+380 96 180 0358", "niche": "Натяжні стелі", "details": "Натяжні стелі · рейтинг 5.0 (5) відгуків", "site": "Немає", "rev": 5, "prompt": "Контекст: бізнес у м. Хмельницький, рейтинг 5.0 (5) (5 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи продаючий лендінг для компанії натяжних стель «Натяжні стелі «Купідон»» (Хмельницький). Мета — заявки на безкоштовний замір. Структура: 1) оффер «Натяжні стелі під ключ за 1 день — без пилу, гарантія» + кнопка «Безкоштовний замір»; 2) типи стель (матові, глянцеві, сатин, багаторівневі, з LED-підсвіткою, фотодрук, парящі); 3) галерея робіт; 4) онлайн-калькулятор ціни за м²; 5) переваги (європейські полотна, чисті бригади, гарантія, монтаж за день); 6) відгуки; 7) форма заявки + телефон +380 96 180 0358, адреса, карта. Стиль: світлий, інтер'єрний, акцент на світлі й фактурі. Мова: українська. Онлайн-калькулятор і sticky-кнопка дзвінка."}, {"region": "Захід", "name": "Speil (натяжні стелі)", "city": "Хмельницький", "phone": "+380 67 155 6550", "niche": "Натяжні стелі", "details": "Натяжні стелі · проспект Миру, 88 · рейтинг 5.0 (2) відгуків", "site": "Немає", "rev": 2, "prompt": "Контекст: бізнес у м. Хмельницький, рейтинг 5.0 (2) (2 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи продаючий лендінг для компанії натяжних стель «Speil» (Хмельницький, проспект Миру, 88). Мета — заявки на безкоштовний замір. Структура: 1) оффер «Натяжні стелі під ключ за 1 день — без пилу, гарантія» + кнопка «Безкоштовний замір»; 2) типи стель (матові, глянцеві, сатин, багаторівневі, з LED-підсвіткою, фотодрук, парящі); 3) галерея робіт; 4) онлайн-калькулятор ціни за м²; 5) переваги (європейські полотна, чисті бригади, гарантія, монтаж за день); 6) відгуки; 7) форма заявки + телефон +380 67 155 6550, адреса, карта. Стиль: світлий, інтер'єрний, акцент на світлі й фактурі. Мова: українська. Онлайн-калькулятор і sticky-кнопка дзвінка."}, {"region": "Захід", "name": "Стоматологія «Престиж дент»", "city": "Коломия", "phone": "+380 97 951 4108", "niche": "Стоматологія", "details": "Стоматологія · вул. І. Мазепи, 179 · рейтинг 5.0 (15) відгуків", "site": "Немає", "rev": 15, "prompt": "Контекст: бізнес у м. Коломия, рейтинг 5.0 (15) (15 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Стоматологія «Престиж дент»» (Коломия, вул. І. Мазепи, 179). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 97 951 4108, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Стоматологія Филипівих", "city": "Коломия", "phone": "+380 96 934 7717", "niche": "Стоматологія", "details": "Стоматологія · вул. І. Мазепи, 50 · рейтинг 5.0 (1) відгуків", "site": "Немає", "rev": 1, "prompt": "Контекст: бізнес у м. Коломия, рейтинг 5.0 (1) (1 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Стоматологія Филипівих» (Коломия, вул. І. Мазепи, 50). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 96 934 7717, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "«Кухні на замовлення» (виробник меблів)", "city": "Чернівці", "phone": "+380 50 808 0454", "niche": "Меблі/кухні на замовлення", "details": "Меблі/кухні на замовлення · вул. Калинівська, 8А · рейтинг 4.7 (32) відгуків", "site": "Лише Instagram", "rev": 32, "prompt": "Контекст: бізнес у м. Чернівці, рейтинг 4.7 (32) (32 відгуків), присутній лише в Instagram — зроби повноцінний сайт-конвертер. Створи преміальний продаючий лендінг для виробника меблів на замовлення ««Кухні на замовлення»» (Чернівці, вул. Калинівська, 8А). Компанія зараз має лише Instagram — підтягни фото звідти. Ніша: кухні, шафи-купе, гардеробні, корпусні меблі за індивідуальним проєктом. Мета — заявки на замір і 3D-проєкт. Структура: 1) оффер «Меблі мрії на замовлення — індивідуальний проєкт, монтаж під ключ» + «Безкоштовний 3D-проєкт»; 2) категорії меблів; 3) велика галерея робіт; 4) процес (замір → 3D → виробництво → монтаж); 5) переваги (власне виробництво, фурнітура Blum, терміни, гарантія); 6) відгуки; 7) форма + телефон +380 50 808 0454, месенджери/Instagram, адреса. Стиль: дорогий, глянцевий, великі фото, тепла палітра. Мова: українська. Sticky-кнопка дзвінка."}, {"region": "Захід", "name": "Натяжні стелі «Сучасні Стелі»", "city": "Луцьк", "phone": "+380 50 717 1447", "niche": "Натяжні стелі", "details": "Натяжні стелі · вул. Данила Галицького, 21 · рейтинг 4.5 (25) відгуків", "site": "Немає", "rev": 25, "prompt": "Контекст: бізнес у м. Луцьк, рейтинг 4.5 (25) (25 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи продаючий лендінг для компанії натяжних стель «Натяжні стелі «Сучасні Стелі»» (Луцьк, вул. Данила Галицького, 21). Мета — заявки на безкоштовний замір. Структура: 1) оффер «Натяжні стелі під ключ за 1 день — без пилу, гарантія» + кнопка «Безкоштовний замір»; 2) типи стель (матові, глянцеві, сатин, багаторівневі, з LED-підсвіткою, фотодрук, парящі); 3) галерея робіт; 4) онлайн-калькулятор ціни за м²; 5) переваги (європейські полотна, чисті бригади, гарантія, монтаж за день); 6) відгуки; 7) форма заявки + телефон +380 50 717 1447, адреса, карта. Стиль: світлий, інтер'єрний, акцент на світлі й фактурі. Мова: українська. Онлайн-калькулятор і sticky-кнопка дзвінка."}, {"region": "Захід", "name": "Стоматологія Vivadent", "city": "Дрогобич", "phone": "+380 96 785 2008", "niche": "Стоматологія", "details": "Стоматологія · вул. М. Грушевського, 105 · рейтинг 4.6 (29) відгуків", "site": "Немає", "rev": 29, "prompt": "Контекст: бізнес у м. Дрогобич, рейтинг 4.6 (29) (29 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Стоматологія Vivadent» (Дрогобич, вул. М. Грушевського, 105). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 96 785 2008, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Melko CLINIC — стоматологія", "city": "Дрогобич", "phone": "+380 73 577 0777", "niche": "Стоматологія", "details": "Стоматологія · вул. М. Грушевського, 103/1 · рейтинг 5.0 (10) відгуків", "site": "Немає", "rev": 10, "prompt": "Контекст: бізнес у м. Дрогобич, рейтинг 5.0 (10) (10 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Melko CLINIC — стоматологія» (Дрогобич, вул. М. Грушевського, 103/1). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 73 577 0777, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Стоматологія «Юрдентсервіс»", "city": "Ужгород", "phone": "+380 312 653 764", "niche": "Стоматологія", "details": "Стоматологія · вул. Заньковецької, 77 · рейтинг 4.6 (70) відгуків", "site": "Немає", "rev": 70, "prompt": "Контекст: бізнес у м. Ужгород, рейтинг 4.6 (70) (70 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Стоматологія «Юрдентсервіс»» (Ужгород, вул. Заньковецької, 77). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 312 653 764, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Лебедько Станіслав, лікар-стоматолог", "city": "Мукачево", "phone": "+380 99 006 8359", "niche": "Стоматологія", "details": "Стоматологія · пл. Кирила і Мефодія, 27/13 · рейтинг 5.0 (57) відгуків", "site": "Немає", "rev": 57, "prompt": "Контекст: бізнес у м. Мукачево, рейтинг 5.0 (57) (57 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Лебедько Станіслав, лікар-стоматолог» (Мукачево, пл. Кирила і Мефодія, 27/13). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 99 006 8359, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Стоматологічна практика Чудакових", "city": "Кам'янець-Подільський", "phone": "+380 96 372 0036", "niche": "Стоматологія", "details": "Стоматологія · просп. Грушевського, 46 · рейтинг 4.3 (83) відгуків", "site": "Немає", "rev": 83, "prompt": "Контекст: бізнес у м. Кам'янець-Подільський, рейтинг 4.3 (83) (83 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Стоматологічна практика Чудакових» (Кам'янець-Подільський, просп. Грушевського, 46). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 96 372 0036, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Стоматологія Люкс", "city": "Кам'янець-Подільський", "phone": "+380 96 492 9090", "niche": "Стоматологія", "details": "Стоматологія · просп. Грушевського, 56 · рейтинг 4.9 (64) відгуків", "site": "Немає", "rev": 64, "prompt": "Контекст: бізнес у м. Кам'янець-Подільський, рейтинг 4.9 (64) (64 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Стоматологія Люкс» (Кам'янець-Подільський, просп. Грушевського, 56). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 96 492 9090, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Стоматологічний кабінет ДАНТИСТ", "city": "Кам'янець-Подільський", "phone": "+380 67 380 3115", "niche": "Стоматологія", "details": "Стоматологія · вул. Драгоманова, 17 · рейтинг 4.6 (45) відгуків", "site": "Немає", "rev": 45, "prompt": "Контекст: бізнес у м. Кам'янець-Подільський, рейтинг 4.6 (45) (45 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Стоматологічний кабінет ДАНТИСТ» (Кам'янець-Подільський, вул. Драгоманова, 17). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 67 380 3115, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Стоматологія Colibri", "city": "Чортків", "phone": "+380 97 788 4887", "niche": "Стоматологія", "details": "Стоматологія · вул. Б. Лепкого, 1б, оф.4 · рейтинг 4.4 (7) відгуків", "site": "Немає", "rev": 7, "prompt": "Контекст: бізнес у м. Чортків, рейтинг 4.4 (7) (7 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Стоматологія Colibri» (Чортків, вул. Б. Лепкого, 1б, оф.4). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 97 788 4887, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Стоматолог Кілочко", "city": "Чортків", "phone": "+380 98 879 2230", "niche": "Стоматологія", "details": "Стоматологія · вул. Д. Пігути, 3 · рейтинг 5.0 (3) відгуків", "site": "Немає", "rev": 3, "prompt": "Контекст: бізнес у м. Чортків, рейтинг 5.0 (3) (3 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Стоматолог Кілочко» (Чортків, вул. Д. Пігути, 3). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 98 879 2230, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Стоматологічна клініка Романа Дунця", "city": "Стрий", "phone": "+380 66 063 7609", "niche": "Стоматологія", "details": "Стоматологія · вул. Лисенка, 7 · рейтинг 5.0 (7) відгуків", "site": "Немає", "rev": 7, "prompt": "Контекст: бізнес у м. Стрий, рейтинг 5.0 (7) (7 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Стоматологічна клініка Романа Дунця» (Стрий, вул. Лисенка, 7). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 66 063 7609, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "All Dental Studio", "city": "Калуш", "phone": "+380 99 702 2572", "niche": "Стоматологія", "details": "Стоматологія · Майдан Шептицького, 5 · рейтинг 4.8 (66) відгуків", "site": "Немає", "rev": 66, "prompt": "Контекст: бізнес у м. Калуш, рейтинг 4.8 (66) (66 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «All Dental Studio» (Калуш, Майдан Шептицького, 5). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 99 702 2572, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "КваліДент", "city": "Калуш", "phone": "+380 66 037 9069", "niche": "Стоматологія", "details": "Стоматологія · вул. Б. Хмельницького, 8 · рейтинг 4.7 (14) відгуків", "site": "Немає", "rev": 14, "prompt": "Контекст: бізнес у м. Калуш, рейтинг 4.7 (14) (14 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «КваліДент» (Калуш, вул. Б. Хмельницького, 8). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 66 037 9069, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Натяжні стелі Original", "city": "Івано-Франківськ", "phone": "+380 96 332 8265", "niche": "Натяжні стелі", "details": "Натяжні стелі · вул. Б. Хмельницького, 96 · рейтинг 5.0 (5) відгуків", "site": "Немає", "rev": 5, "prompt": "Контекст: бізнес у м. Івано-Франківськ, рейтинг 5.0 (5) (5 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи продаючий лендінг для компанії натяжних стель «Натяжні стелі Original» (Івано-Франківськ, вул. Б. Хмельницького, 96). Мета — заявки на безкоштовний замір. Структура: 1) оффер «Натяжні стелі під ключ за 1 день — без пилу, гарантія» + кнопка «Безкоштовний замір»; 2) типи стель (матові, глянцеві, сатин, багаторівневі, з LED-підсвіткою, фотодрук, парящі); 3) галерея робіт; 4) онлайн-калькулятор ціни за м²; 5) переваги (європейські полотна, чисті бригади, гарантія, монтаж за день); 6) відгуки; 7) форма заявки + телефон +380 96 332 8265, адреса, карта. Стиль: світлий, інтер'єрний, акцент на світлі й фактурі. Мова: українська. Онлайн-калькулятор і sticky-кнопка дзвінка."}, {"region": "Захід", "name": "ANRi Натяжні стелі", "city": "Івано-Франківськ", "phone": "+380 50 854 8912", "niche": "Натяжні стелі", "details": "Натяжні стелі · рейтинг 5.0 (16) відгуків", "site": "Немає", "rev": 16, "prompt": "Контекст: бізнес у м. Івано-Франківськ, рейтинг 5.0 (16) (16 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи продаючий лендінг для компанії натяжних стель «ANRi Натяжні стелі» (Івано-Франківськ). Мета — заявки на безкоштовний замір. Структура: 1) оффер «Натяжні стелі під ключ за 1 день — без пилу, гарантія» + кнопка «Безкоштовний замір»; 2) типи стель (матові, глянцеві, сатин, багаторівневі, з LED-підсвіткою, фотодрук, парящі); 3) галерея робіт; 4) онлайн-калькулятор ціни за м²; 5) переваги (європейські полотна, чисті бригади, гарантія, монтаж за день); 6) відгуки; 7) форма заявки + телефон +380 50 854 8912, адреса, карта. Стиль: світлий, інтер'єрний, акцент на світлі й фактурі. Мова: українська. Онлайн-калькулятор і sticky-кнопка дзвінка."}, {"region": "Захід", "name": "DENTIS", "city": "Ковель", "phone": "+380 99 111 4255", "niche": "Стоматологія", "details": "Стоматологія · вул. М. Грушевського, 1 · рейтинг 4.7 (12) відгуків", "site": "Немає", "rev": 12, "prompt": "Контекст: бізнес у м. Ковель, рейтинг 4.7 (12) (12 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «DENTIS» (Ковель, вул. М. Грушевського, 1). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 99 111 4255, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Стоматологія «Астрамед»", "city": "Ковель", "phone": "+380 73 076 7967", "niche": "Стоматологія", "details": "Стоматологія · вул. Героїв України, 4А · рейтинг 5.0 (4) відгуків", "site": "Немає", "rev": 4, "prompt": "Контекст: бізнес у м. Ковель, рейтинг 5.0 (4) (4 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Стоматологія «Астрамед»» (Ковель, вул. Героїв України, 4А). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 73 076 7967, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Стоматологія «Дента»", "city": "Нововолинськ", "phone": "+380 68 993 3100", "niche": "Стоматологія", "details": "Стоматологія · м-н Шахтарський, 3 · рейтинг 5.0 (11) відгуків", "site": "Немає", "rev": 11, "prompt": "Контекст: бізнес у м. Нововолинськ, рейтинг 5.0 (11) (11 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Стоматологія «Дента»» (Нововолинськ, м-н Шахтарський, 3). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 68 993 3100, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Family Dent", "city": "Нововолинськ", "phone": "+380 67 437 7913", "niche": "Стоматологія", "details": "Стоматологія · вул. Св. Володимира, 32 · рейтинг 5.0 (17) відгуків", "site": "Немає", "rev": 17, "prompt": "Контекст: бізнес у м. Нововолинськ, рейтинг 5.0 (17) (17 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Family Dent» (Нововолинськ, вул. Св. Володимира, 32). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 67 437 7913, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Стоматологічна клініка Пугачових", "city": "Нововолинськ", "phone": "+380 98 607 5150", "niche": "Стоматологія", "details": "Стоматологія · просп. Перемоги, 14 · рейтинг 4.7 (29) відгуків", "site": "Немає", "rev": 29, "prompt": "Контекст: бізнес у м. Нововолинськ, рейтинг 4.7 (29) (29 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Стоматологічна клініка Пугачових» (Нововолинськ, просп. Перемоги, 14). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 98 607 5150, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Стоматологія Величканич (Dr.V)", "city": "Трускавець", "phone": "+380 68 843 1980", "niche": "Стоматологія + косметологія", "details": "Стоматологія + косметологія · вул. І. Мазепи, 2 · рейтинг 4.7 (57) відгуків", "site": "Немає", "rev": 57, "prompt": "Контекст: бізнес у м. Трускавець, рейтинг 4.7 (57) (57 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи преміальний сайт для клініки «Стоматологія Величканич» (Трускавець, вул. І. Мазепи, 2) — стоматологія та естетична косметологія. Мета — записи. Структура: 1) оффер «Стоматологія та естетична медицина — краса й здоров'я в одному місці» + «Записатися»; 2) напрями (стоматологія: лікування, імплантація, естетика; косметологія: чистки, ін'єкційна, апаратна, догляд); 3) переваги (лікарі-експерти, сучасне обладнання, індивідуальний підхід); 4) команда (фото-плейсхолдери); 5) роботи «до/після»; 6) відгуки; 7) онлайн-запис + телефон +380 68 843 1980, адреса, карта. Стиль: преміальний, чистий, світлі тони + акцент. Мова: українська. Форма запису з вибором напряму, sticky-кнопка."}, {"region": "Захід", "name": "Стоматологія Art.Dental", "city": "Трускавець", "phone": "+380 96 171 0060", "niche": "Стоматологія", "details": "Стоматологія · вул. Стебницька, 84 · рейтинг 4.7 (42) відгуків", "site": "Немає", "rev": 42, "prompt": "Контекст: бізнес у м. Трускавець, рейтинг 4.7 (42) (42 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Стоматологія Art.Dental» (Трускавець, вул. Стебницька, 84). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 96 171 0060, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Натяжні стелі «Олімп Студіо»", "city": "Тернопіль", "phone": "+380 98 014 2014", "niche": "Натяжні стелі", "details": "Натяжні стелі · вул. Чорновола, 15 · рейтинг 4.8 (16) відгуків", "site": "Немає", "rev": 16, "prompt": "Контекст: бізнес у м. Тернопіль, рейтинг 4.8 (16) (16 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи продаючий лендінг для компанії натяжних стель «Натяжні стелі «Олімп Студіо»» (Тернопіль, вул. Чорновола, 15). Мета — заявки на безкоштовний замір. Структура: 1) оффер «Натяжні стелі під ключ за 1 день — без пилу, гарантія» + кнопка «Безкоштовний замір»; 2) типи стель (матові, глянцеві, сатин, багаторівневі, з LED-підсвіткою, фотодрук, парящі); 3) галерея робіт; 4) онлайн-калькулятор ціни за м²; 5) переваги (європейські полотна, чисті бригади, гарантія, монтаж за день); 6) відгуки; 7) форма заявки + телефон +380 98 014 2014, адреса, карта. Стиль: світлий, інтер'єрний, акцент на світлі й фактурі. Мова: українська. Онлайн-калькулятор і sticky-кнопка дзвінка."}, {"region": "Захід", "name": "Натяжні стелі ORIGINAL", "city": "Тернопіль", "phone": "+380 98 091 0251", "niche": "Натяжні стелі", "details": "Натяжні стелі · вул. Текстильна, 24-Е · рейтинг 4.7 (14) відгуків", "site": "Немає", "rev": 14, "prompt": "Контекст: бізнес у м. Тернопіль, рейтинг 4.7 (14) (14 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи продаючий лендінг для компанії натяжних стель «Натяжні стелі ORIGINAL» (Тернопіль, вул. Текстильна, 24-Е). Мета — заявки на безкоштовний замір. Структура: 1) оффер «Натяжні стелі під ключ за 1 день — без пилу, гарантія» + кнопка «Безкоштовний замір»; 2) типи стель (матові, глянцеві, сатин, багаторівневі, з LED-підсвіткою, фотодрук, парящі); 3) галерея робіт; 4) онлайн-калькулятор ціни за м²; 5) переваги (європейські полотна, чисті бригади, гарантія, монтаж за день); 6) відгуки; 7) форма заявки + телефон +380 98 091 0251, адреса, карта. Стиль: світлий, інтер'єрний, акцент на світлі й фактурі. Мова: українська. Онлайн-калькулятор і sticky-кнопка дзвінка."}, {"region": "Захід", "name": "Натяжні стелі «Мій Дім»", "city": "Рівне", "phone": "+380 67 808 7707", "niche": "Натяжні стелі", "details": "Натяжні стелі · вул. Степана Бандери, 60 · рейтинг 4.6 (22) відгуків", "site": "Немає", "rev": 22, "prompt": "Контекст: бізнес у м. Рівне, рейтинг 4.6 (22) (22 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи продаючий лендінг для компанії натяжних стель «Натяжні стелі «Мій Дім»» (Рівне, вул. Степана Бандери, 60). Мета — заявки на безкоштовний замір. Структура: 1) оффер «Натяжні стелі під ключ за 1 день — без пилу, гарантія» + кнопка «Безкоштовний замір»; 2) типи стель (матові, глянцеві, сатин, багаторівневі, з LED-підсвіткою, фотодрук, парящі); 3) галерея робіт; 4) онлайн-калькулятор ціни за м²; 5) переваги (європейські полотна, чисті бригади, гарантія, монтаж за день); 6) відгуки; 7) форма заявки + телефон +380 67 808 7707, адреса, карта. Стиль: світлий, інтер'єрний, акцент на світлі й фактурі. Мова: українська. Онлайн-калькулятор і sticky-кнопка дзвінка."}, {"region": "Захід", "name": "Maxistelya (натяжні стелі)", "city": "Рівне", "phone": "+380 96 905 1078", "niche": "Натяжні стелі", "details": "Натяжні стелі · вул. Небесної Сотні, 10а · рейтинг 5.0 (8) відгуків", "site": "Немає", "rev": 8, "prompt": "Контекст: бізнес у м. Рівне, рейтинг 5.0 (8) (8 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи продаючий лендінг для компанії натяжних стель «Maxistelya» (Рівне, вул. Небесної Сотні, 10а). Мета — заявки на безкоштовний замір. Структура: 1) оффер «Натяжні стелі під ключ за 1 день — без пилу, гарантія» + кнопка «Безкоштовний замір»; 2) типи стель (матові, глянцеві, сатин, багаторівневі, з LED-підсвіткою, фотодрук, парящі); 3) галерея робіт; 4) онлайн-калькулятор ціни за м²; 5) переваги (європейські полотна, чисті бригади, гарантія, монтаж за день); 6) відгуки; 7) форма заявки + телефон +380 96 905 1078, адреса, карта. Стиль: світлий, інтер'єрний, акцент на світлі й фактурі. Мова: українська. Онлайн-калькулятор і sticky-кнопка дзвінка."}, {"region": "Захід", "name": "Натяжні стелі VERSHYNA", "city": "Чернівці", "phone": "+380 66 180 9393", "niche": "Натяжні стелі", "details": "Натяжні стелі · рейтинг 5.0 (9) відгуків", "site": "Немає", "rev": 9, "prompt": "Контекст: бізнес у м. Чернівці, рейтинг 5.0 (9) (9 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи продаючий лендінг для компанії натяжних стель «Натяжні стелі VERSHYNA» (Чернівці). Мета — заявки на безкоштовний замір. Структура: 1) оффер «Натяжні стелі під ключ за 1 день — без пилу, гарантія» + кнопка «Безкоштовний замір»; 2) типи стель (матові, глянцеві, сатин, багаторівневі, з LED-підсвіткою, фотодрук, парящі); 3) галерея робіт; 4) онлайн-калькулятор ціни за м²; 5) переваги (європейські полотна, чисті бригади, гарантія, монтаж за день); 6) відгуки; 7) форма заявки + телефон +380 66 180 9393, адреса, карта. Стиль: світлий, інтер'єрний, акцент на світлі й фактурі. Мова: українська. Онлайн-калькулятор і sticky-кнопка дзвінка."}, {"region": "Захід", "name": "Натяжні стелі Ужгород", "city": "Ужгород", "phone": "+380 66 502 8213", "niche": "Натяжні стелі", "details": "Натяжні стелі · рейтинг 4.1 (7) відгуків", "site": "Немає", "rev": 7, "prompt": "Контекст: бізнес у м. Ужгород, рейтинг 4.1 (7) (7 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи продаючий лендінг для компанії натяжних стель «Натяжні стелі Ужгород» (Ужгород). Мета — заявки на безкоштовний замір. Структура: 1) оффер «Натяжні стелі під ключ за 1 день — без пилу, гарантія» + кнопка «Безкоштовний замір»; 2) типи стель (матові, глянцеві, сатин, багаторівневі, з LED-підсвіткою, фотодрук, парящі); 3) галерея робіт; 4) онлайн-калькулятор ціни за м²; 5) переваги (європейські полотна, чисті бригади, гарантія, монтаж за день); 6) відгуки; 7) форма заявки + телефон +380 66 502 8213, адреса, карта. Стиль: світлий, інтер'єрний, акцент на світлі й фактурі. Мова: українська. Онлайн-калькулятор і sticky-кнопка дзвінка."}, {"region": "Захід", "name": "Стоматологічний кабінет «Богдан»", "city": "Червоноград", "phone": "+380 95 920 7760", "niche": "Стоматологія", "details": "Стоматологія · просп. Шевченка, 26/1 · рейтинг 4.8 (43) відгуків", "site": "Немає", "rev": 43, "prompt": "Контекст: бізнес у м. Червоноград, рейтинг 4.8 (43) (43 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Стоматологічний кабінет «Богдан»» (Червоноград, просп. Шевченка, 26/1). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 95 920 7760, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Стоматологічна практика ArtDent", "city": "Самбір", "phone": "+380 67 201 5713", "niche": "Стоматологія", "details": "Стоматологія · вул. Ярослава Мудрого, 10/2 · рейтинг 4.7 (28) відгуків", "site": "Немає", "rev": 28, "prompt": "Контекст: бізнес у м. Самбір, рейтинг 4.7 (28) (28 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Стоматологічна практика ArtDent» (Самбір, вул. Ярослава Мудрого, 10/2). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 67 201 5713, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Стоматологія MyDental", "city": "Дубно", "phone": "+380 99 242 8881", "niche": "Стоматологія", "details": "Стоматологія · вул. Кирила і Мефодія, 22 · рейтинг 4.9 (70) відгуків", "site": "Немає", "rev": 70, "prompt": "Контекст: бізнес у м. Дубно, рейтинг 4.9 (70) (70 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Стоматологія MyDental» (Дубно, вул. Кирила і Мефодія, 22). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 99 242 8881, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Стоматологія ЗУБЧИК", "city": "Дубно", "phone": "+380 50 435 5501", "niche": "Стоматологія", "details": "Стоматологія · вул. Скарбова, 9 · рейтинг 4.5 (15) відгуків", "site": "Немає", "rev": 15, "prompt": "Контекст: бізнес у м. Дубно, рейтинг 4.5 (15) (15 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Стоматологія ЗУБЧИК» (Дубно, вул. Скарбова, 9). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 50 435 5501, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Стоматологія «Дантист»", "city": "Хуст", "phone": "+380 98 000 0660", "niche": "Стоматологія", "details": "Стоматологія · вул. Корятовича, 9/1 · рейтинг 4.7 (31) відгуків", "site": "Немає", "rev": 31, "prompt": "Контекст: бізнес у м. Хуст, рейтинг 4.7 (31) (31 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Стоматологія «Дантист»» (Хуст, вул. Корятовича, 9/1). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 98 000 0660, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "СТОМАТОЛОГІЯ ПОЛІЩУКІВ", "city": "Кременець", "phone": "+380 68 100 3434", "niche": "Стоматологія", "details": "Стоматологія · вул. Шевченка, 75B · рейтинг 4.9 (142) відгуків", "site": "Немає", "rev": 142, "prompt": "Контекст: бізнес у м. Кременець, рейтинг 4.9 (142) (142 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «СТОМАТОЛОГІЯ ПОЛІЩУКІВ» (Кременець, вул. Шевченка, 75B). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 68 100 3434, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Сімейна стоматологія Микуцьких", "city": "Кременець", "phone": "+380 96 254 2388", "niche": "Стоматологія", "details": "Стоматологія · вул. Дубенська, 161 · рейтинг 5.0 (25) відгуків", "site": "Немає", "rev": 25, "prompt": "Контекст: бізнес у м. Кременець, рейтинг 5.0 (25) (25 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Сімейна стоматологія Микуцьких» (Кременець, вул. Дубенська, 161). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 96 254 2388, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Стоматологічний Центр Павлишин", "city": "Кременець", "phone": "+380 98 969 6838", "niche": "Стоматологія", "details": "Стоматологія · вул. Лятуринської, 15/1 · рейтинг 4.7 (15) відгуків", "site": "Немає", "rev": 15, "prompt": "Контекст: бізнес у м. Кременець, рейтинг 4.7 (15) (15 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Стоматологічний Центр Павлишин» (Кременець, вул. Лятуринської, 15/1). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 98 969 6838, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Стоматологічний кабінет Криницьких", "city": "Кременець", "phone": "+380 67 289 2157", "niche": "Стоматологія", "details": "Стоматологія · вул. Дубенська, 182/2 · рейтинг 4.5 (8) відгуків", "site": "Немає", "rev": 8, "prompt": "Контекст: бізнес у м. Кременець, рейтинг 4.5 (8) (8 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Стоматологічний кабінет Криницьких» (Кременець, вул. Дубенська, 182/2). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 67 289 2157, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "BorDental", "city": "Бучач", "phone": "+380 97 877 1787", "niche": "Стоматологія", "details": "Стоматологія · вул. Ген. Шухевича, 1 · рейтинг 4.4 (12) відгуків", "site": "Немає", "rev": 12, "prompt": "Контекст: бізнес у м. Бучач, рейтинг 4.4 (12) (12 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «BorDental» (Бучач, вул. Ген. Шухевича, 1). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 97 877 1787, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Сімейна стоматологія Stoma Service", "city": "Долина", "phone": "+380 99 103 1368", "niche": "Стоматологія", "details": "Стоматологія · вул. Грушевського, 19 · рейтинг 4.9 (47) відгуків", "site": "Немає", "rev": 47, "prompt": "Контекст: бізнес у м. Долина, рейтинг 4.9 (47) (47 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Сімейна стоматологія Stoma Service» (Долина, вул. Грушевського, 19). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 99 103 1368, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "ViaDent стоматологія", "city": "Броди", "phone": "+380 97 720 6737", "niche": "Стоматологія", "details": "Стоматологія · вул. Т. Шевченка, 5 · рейтинг 5.0 (13) відгуків", "site": "Немає", "rev": 13, "prompt": "Контекст: бізнес у м. Броди, рейтинг 5.0 (13) (13 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «ViaDent стоматологія» (Броди, вул. Т. Шевченка, 5). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 97 720 6737, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Стоматологія Євродент", "city": "Броди", "phone": "+380 95 910 4794", "niche": "Стоматологія", "details": "Стоматологія · вул. Весела, 16 · рейтинг 4.3 (24) відгуків", "site": "Немає", "rev": 24, "prompt": "Контекст: бізнес у м. Броди, рейтинг 4.3 (24) (24 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Стоматологія Євродент» (Броди, вул. Весела, 16). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 95 910 4794, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Захід", "name": "Стоматологія ГалОДент", "city": "Борислав", "phone": "+380 50 701 9292", "niche": "Стоматологія", "details": "Стоматологія · вул. Т. Шевченка, 12 · рейтинг 5.0 (3) відгуків", "site": "Немає", "rev": 3, "prompt": "Контекст: бізнес у м. Борислав, рейтинг 5.0 (3) (3 відгуків), працює без сайту — зроби першу професійну digital-присутність. Створи сучасний продаючий сайт для стоматології «Стоматологія ГалОДент» (Борислав, вул. Т. Шевченка, 12). Мета — онлайн-записи на прийом. Структура: 1) головний екран «Здорова та красива усмішка — безболісне лікування, імплантація, естетика» + кнопка «Записатися на прийом»; 2) послуги (терапія, хірургія, імплантація, протезування, ортодонтія, гігієна, дитяча стоматологія); 3) переваги (сучасне обладнання, досвідчені лікарі, лікування без болю/уві сні, гарантія); 4) команда лікарів (плейсхолдери фото); 5) фото клініки та роботи «до/після»; 6) відгуки пацієнтів; 7) онлайн-запис + телефон +380 50 701 9292, адреса, карта. Стиль: чистий медичний, білі/бірюзові тони, довіра й безпека. Мова: українська. Форма запису з вибором послуги, sticky-кнопка запису/дзвінка, швидке завантаження, мікророзмітка."}, {"region": "Редизайн", "name": "Дизайн-студія «Новатор-Глянець»", "city": "Луцьк", "phone": "+380 66 924 3555", "niche": "Натяжні стелі", "site": "Слабкий сайт", "rev": 40, "current": "gljanec.com.ua", "details": "Натяжні стелі · рейтинг 4.9 (40) · Поточний сайт gljanec.com.ua — застарілий темний шаблон, у шапці телефон замість оффера, блоки накладаються, немає структури й CTA, несучасно на мобільному", "prompt": "Повний редизайн сайту студії натяжних стель «Новатор-Глянець» (Луцьк) замість старого gljanec.com.ua. Проблеми поточного: темний застарілий шаблон, телефон замість оффера, погана читабельність, немає структури й CTA. Зроби сучасний світлий адаптивний лендінг. Перший екран: «Натяжні стелі у Луцьку під ключ — монтаж за день, гарантія» + кнопка «Безкоштовний замір». Секції: типи стель (мат, глянець, сатин, багаторівневі, LED, фотодрук), галерея, онлайн-калькулятор за м², переваги (40 відгуків 4.9★, європейські полотна, гарантія), відгуки, форма + телефон +380 66 924 3555. Прибери RU, акуратна типографіка, sticky-дзвінок. Мова: українська."}, {"region": "Редизайн", "name": "Mirpotolkov (натяжні стелі)", "city": "Вінниця", "phone": "063 273 06 99 / 097 722 49 24", "niche": "Натяжні стелі", "site": "Слабкий сайт", "rev": 17, "current": "mirpotolkov.org.ua", "details": "Натяжні стелі · рейтинг 5.0 (17) · Поточний сайт mirpotolkov.org.ua — старий дизайн, замість оффера декоративний напис домену, темний фон, RU/UA-мішанина, немає калькулятора", "prompt": "Повний редизайн сайту компанії натяжних стель «Mirpotolkov» (Вінниця) замість застарілого mirpotolkov.org.ua. Проблеми: старий дизайн, замість оффера декоративний напис домену, темний фон, RU/UA. Зроби сучасний адаптивний лендінг українською. Перший екран: «Натяжні стелі у Вінниці — якісно, за 1 день, з гарантією» + «Розрахувати вартість». Секції: види стель, каталог, велике портфоліо, онлайн-калькулятор за м², переваги (5.0★, досвід, гарантія), відгуки, форма + телефони 063 273 06 99 / 097 722 49 24 (Viber). Прибери RU, світла сучасна палітра, sticky-дзвінок."}];
+DATA.forEach((d,i)=>{d._i=i; d._id=(d.name+'|'+d.city+'|'+d.phone).replace(/\s+/g,' ').trim();});
+
+/* ============ КОНФІГ ХМАРИ (заповни для спільного доступу) ============ */
+const SUPABASE_URL=''; // напр. https://xxxx.supabase.co
+const SUPABASE_KEY=''; // публічний anon key
+const CLOUD=!!(SUPABASE_URL&&SUPABASE_KEY);
+/* ==================================================================== */
+
+const STAGES=[
+ {k:'new',t:'Новий',c:'#9b9a97',bg:'#eeeeec'},
+ {k:'draft',t:'Готую чернетку',c:'#2383e2',bg:'#d3e5ef'},
+ {k:'pitch',t:'Показ клієнту',c:'#9065b0',bg:'#e8deee'},
+ {k:'edits',t:'Правки',c:'#cb912f',bg:'#fdecc8'},
+ {k:'handoff',t:'Передача',c:'#d9730d',bg:'#fadec9'},
+ {k:'won',t:'💰 Угода',c:'#448361',bg:'#dbeddb'},
+ {k:'lost',t:'❌ Відмова',c:'#c4554d',bg:'#ffe2dd'},
+];
+const STG=Object.fromEntries(STAGES.map(s=>[s.k,s]));
+const ACTIVE=new Set(['draft','pitch','edits','handoff']);
+const TCOLS=[{k:'todo',t:'Треба зробити',c:'#9b9a97'},{k:'doing',t:'В роботі',c:'#2383e2'},{k:'done',t:'Готово',c:'#448361'}];
+const TC=Object.fromEntries(TCOLS.map(c=>[c.k,c]));
+const PALETTE=['#e2563b','#d9730d','#cb912f','#448361','#2383e2','#9065b0','#c14c8a','#0f7b6c','#5b6ac4','#b8574f'];
+
+/* ---------- STATE ---------- */
+let state={members:[],leadState:{},tasks:[]};
+let me=localStorage.getItem('crm_me')||'';
+
+const $=id=>document.getElementById(id);
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function uuid(){return (crypto.randomUUID?crypto.randomUUID():'id-'+Date.now()+'-'+Math.random().toString(16).slice(2))}
+function digits(p){return p.replace(/[^0-9+]/g,'').split('/')[0]}
+function gmaps(d){return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(d.name+' '+d.city)}
+function isFurn(d){return /меблі|кух/i.test(d.niche)}
+function cta(d){return isFurn(d)?'замовлення':'запис'}
+function todayStr(){const t=new Date();return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');}
+function fmtDate(s){if(!s)return'';const p=s.split('-');return p[2]+'.'+p[1];}
+function dueClass(s){if(!s)return'';const t=todayStr();return s<t?'over':(s===t?'today':'');}
+function money(n){n=Number(n)||0;return n.toLocaleString('uk-UA');}
+function toast(m){const el=$('toast');el.textContent=m;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),1400);}
+function copy(t,ok){navigator.clipboard.writeText(t).then(()=>toast(ok||'Скопійовано'));}
+function stagePill(k){const s=STG[k];return '<span class="stg" style="background:'+s.bg+';color:'+s.c+'"><span class="d" style="background:'+s.c+'"></span>'+s.t+'</span>';}
+function member(id){return state.members.find(m=>m.id===id);}
+function avatar(id,cls){const m=member(id);if(!m)return '<span class="av none '+(cls||'')+'">–</span>';return '<span class="av '+(cls||'')+'" style="background:'+m.color+'" title="'+esc(m.name)+'">'+esc((m.name[0]||'?').toUpperCase())+'</span>';}
+function memberOptions(cur){return '<option value="">— виконавець —</option>'+state.members.map(m=>'<option value="'+m.id+'"'+(m.id===cur?' selected':'')+'>'+esc(m.name)+'</option>').join('');}
+
+function pitch(d){
+ if(d.site==='Лише Instagram') return 'Працює лише через Instagram, уже '+d.rev+' відгуків — платить за рекламу, але трафік нема куди вести: без сайту губляться заявки, немає онлайн-'+cta(d)+'у, і клієнт, що гуглить перед візитом, не знаходить нічого.';
+ if(d.site==='Слабкий сайт') return 'Сайт є, але застарілий і не продає ('+d.rev+' відгуків, репутація сильна) — сучасний сайт із чітким CTA підніме заявки з того ж трафіку.';
+ return d.rev+' відгуків, сильна репутація — але сайту немає. Коли клієнт гуглить перед візитом, конкурент із сайтом забирає його. Ти приходиш уже з готовою чернеткою під цей бізнес.';
+}
+function scriptTxt(d){
+ if(d.site==='Слабкий сайт') return 'Вітаю! Роблю продаючі сайти. Бачив ваш сайт — у вас крута репутація ('+d.rev+' відгуків), але сайт застарів і втрачає заявки. Я вже зібрав сучасний варіант-чернетку саме під вас — можу скинути на перегляд, ні до чого не зобов’язує. Зручно глянути?';
+ const soc=d.site==='Лише Instagram'?'а сайту, куди вести клієнтів, немає':'а сайту немає';
+ return 'Вітаю! Роблю продаючі сайти для '+d.niche.toLowerCase()+'. Подивився ваш профіль у Google — сильна репутація ('+d.rev+' відгуків), '+soc+'. Я вже підготував чорновий сайт саме під вас — можу скинути на перегляд, ні до чого не зобов’язує. Зручно глянути?';
+}
+function rec(d){ if(!state.leadState[d._id]) state.leadState[d._id]={stage:'new',amount:'',next:'',nextNote:'',assignee:'',notes:[]}; return state.leadState[d._id]; }
+
+/* ============ BACKEND ============ */
+let sb=null;
+const LocalBackend={
+ async init(){try{const s=JSON.parse(localStorage.getItem('crm_team_v1'));if(s)state=Object.assign(state,s);}catch(e){}},
+ persist(){localStorage.setItem('crm_team_v1',JSON.stringify(state));},
+ async saveLead(){this.persist();},
+ async saveTask(){this.persist();},
+ async delTask(){this.persist();},
+ async saveMember(){this.persist();},
+ async delMember(){this.persist();},
+};
+const SupabaseBackend={
+ async init(onChange){
+   sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+   await this.reload();
+   sb.channel('rt').on('postgres_changes',{event:'*',schema:'public'},()=>{this.reload().then(()=>onChange&&onChange());}).subscribe();
+ },
+ async reload(){
+   const [m,l,t]=await Promise.all([sb.from('members').select('*'),sb.from('lead_state').select('*'),sb.from('tasks').select('*')]);
+   state.members=m.data||[];
+   state.leadState={};(l.data||[]).forEach(r=>state.leadState[r.lead_id]={stage:r.stage||'new',amount:r.amount||'',next:r.next_action||'',nextNote:r.next_note||'',assignee:r.assignee||'',notes:r.notes||[]});
+   state.tasks=t.data||[];
+ },
+ async saveLead(id){const s=state.leadState[id];await sb.from('lead_state').upsert({lead_id:id,stage:s.stage,amount:s.amount,next_action:s.next||null,next_note:s.nextNote,assignee:s.assignee||null,notes:s.notes},{onConflict:'lead_id'});},
+ async saveTask(t){await sb.from('tasks').upsert(t);},
+ async delTask(id){await sb.from('tasks').delete().eq('id',id);},
+ async saveMember(m){await sb.from('members').upsert(m);},
+ async delMember(id){await sb.from('members').delete().eq('id',id);},
+};
+const Backend=CLOUD?SupabaseBackend:LocalBackend;
+let saveT={};
+function saveLead(id){clearTimeout(saveT[id]);saveT[id]=setTimeout(()=>Backend.saveLead(id),300);}
+
+/* ---------- filters ---------- */
+const q=$('q'),regionSel=$('region'),citySel=$('city'),nicheSel=$('niche'),assigneeSel=$('assignee'),sortSel=$('sort'),onlyMine=$('onlyMine');
+function opts(sel,label,vals){sel.innerHTML='<option value="">'+label+'</option>'+[...new Set(vals)].sort((a,b)=>a.localeCompare(b,'uk')).map(v=>'<option>'+esc(v)+'</option>').join('')}
+opts(regionSel,'Усі регіони',DATA.map(d=>d.region));
+opts(citySel,'Усі міста',DATA.map(d=>d.city));
+opts(nicheSel,'Усі ніші',DATA.map(d=>d.niche));
+function refreshAssigneeFilter(){assigneeSel.innerHTML='<option value="">Усі виконавці</option><option value="__none">Без виконавця</option>'+state.members.map(m=>'<option value="'+m.id+'">'+esc(m.name)+'</option>').join('');}
+
+let stageFilter='';
+function filtered(){
+ let r=DATA.slice();
+ const s=q.value.trim().toLowerCase();
+ if(s) r=r.filter(d=>{const rc=rec(d);return (d.name+' '+d.city+' '+d.phone+' '+d.niche+' '+d.details+' '+(rc.notes||[]).map(n=>n.text).join(' ')).toLowerCase().includes(s);});
+ if(stageFilter) r=r.filter(d=>rec(d).stage===stageFilter);
+ if(regionSel.value) r=r.filter(d=>d.region===regionSel.value);
+ if(citySel.value) r=r.filter(d=>d.city===citySel.value);
+ if(nicheSel.value) r=r.filter(d=>d.niche===nicheSel.value);
+ if(assigneeSel.value) r=r.filter(d=>assigneeSel.value==='__none'?!rec(d).assignee:rec(d).assignee===assigneeSel.value);
+ if(onlyMine.checked&&me) r=r.filter(d=>rec(d).assignee===me);
+ const k=sortSel.value,ord=Object.fromEntries(STAGES.map((s,i)=>[s.k,i]));
+ if(k==='stage')r.sort((a,b)=>ord[rec(a).stage]-ord[rec(b).stage]||b.rev-a.rev);
+ else if(k==='due')r.sort((a,b)=>(rec(a).next||'9999').localeCompare(rec(b).next||'9999'));
+ else if(k==='rev')r.sort((a,b)=>b.rev-a.rev);
+ else if(k==='amt')r.sort((a,b)=>(Number(rec(b).amount)||0)-(Number(rec(a).amount)||0));
+ else if(k==='name')r.sort((a,b)=>a.name.localeCompare(b.name,'uk'));
+ return r;
+}
+
+/* ---------- identity ---------- */
+function renderMe(){
+ const m=member(me);
+ if(m){$('meAv').outerHTML='<span id="meAv">'+avatar(me,'lg')+'</span>';$('meWho').innerHTML='<b>'+esc(m.name)+'</b><small>це я</small>';}
+ else{$('meAv').outerHTML='<span id="meAv"><span class="av none lg">?</span></span>';$('meWho').innerHTML='<b>Обери себе</b><small>натисни, щоб увійти</small>';}
+ $('meDrop').innerHTML=state.members.map(m=>'<div class="mi" data-me="'+m.id+'">'+avatar(m.id)+esc(m.name)+(m.id===me?' ✓':'')+'</div>').join('')+
+   '<div class="mi" data-addme style="color:var(--acc)">＋ Додати учасника</div>';
+}
+$('meBtn').addEventListener('click',e=>{if(e.target.closest('[data-me],[data-addme]'))return;$('meDrop').classList.toggle('show');});
+$('meDrop').addEventListener('click',e=>{
+ const mi=e.target.closest('[data-me]');if(mi){me=mi.dataset.me;localStorage.setItem('crm_me',me);$('meDrop').classList.remove('show');renderMe();rerenderAll();return;}
+ if(e.target.closest('[data-addme]')){const name=prompt('Імʼя учасника:');if(name&&name.trim()){const m={id:uuid(),name:name.trim(),color:PALETTE[state.members.length%PALETTE.length],pin:''};state.members.push(m);Backend.saveMember(m);me=m.id;localStorage.setItem('crm_me',me);$('meDrop').classList.remove('show');renderMe();refreshAssigneeFilter();rerenderAll();toast('Учасника додано');}}
+});
+document.addEventListener('click',e=>{if(!e.target.closest('#meBtn'))$('meDrop').classList.remove('show');});
+
+/* ---------- sidebar ---------- */
+function renderSidebar(){
+ const all=DATA.map(rec),t=todayStr();
+ const mineDue=all.filter(r=>(!me||r.assignee===me)&&r.next&&r.next<=t&&r.stage!=='won'&&r.stage!=='lost').length;
+ const myTasks=state.tasks.filter(x=>x.status!=='done'&&(!me||x.assignee===me)&&x.due&&x.due<=t).length;
+ const dueBadge=mineDue+myTasks;
+ $('dueBadge').textContent=dueBadge;$('dueBadge').style.display=dueBadge?'':'none';
+ $('allCnt').textContent=DATA.length;
+ $('taskCnt').textContent=state.tasks.filter(x=>x.status!=='done').length||'';
+ $('teamCnt').textContent=state.members.length||'';
+ const counts={};STAGES.forEach(s=>counts[s.k]=0);all.forEach(r=>counts[r.stage]=(counts[r.stage]||0)+1);
+ $('stageNav').innerHTML=STAGES.map(s=>'<div class="nav'+(view==='table'&&stageFilter===s.k?' on':'')+'" data-stage="'+s.k+'"><span class="stagedot" style="background:'+s.c+'"></span>'+s.t+'<span class="cnt">'+counts[s.k]+'</span></div>').join('');
+ $('cloudPill').className='cloudpill '+(CLOUD?'on':'off');$('cloudPill').textContent=CLOUD?'хмара ✓':'локально';
+}
+
+/* ---------- DASHBOARD ---------- */
+function viewDashboard(){
+ const all=DATA.map(rec),t=todayStr();
+ const won=all.filter(r=>r.stage==='won'),lost=all.filter(r=>r.stage==='lost'),work=all.filter(r=>ACTIVE.has(r.stage));
+ const income=won.reduce((s,r)=>s+(Number(r.amount)||0),0),pipeline=work.reduce((s,r)=>s+(Number(r.amount)||0),0);
+ const decided=won.length+lost.length,conv=decided?Math.round(won.length/decided*100):0;
+ const over=all.filter(r=>r.next&&r.next<t&&r.stage!=='won'&&r.stage!=='lost').length;
+ const counts={};STAGES.forEach(s=>counts[s.k]=0);all.forEach(r=>counts[r.stage]++);
+ const sums={};STAGES.forEach(s=>sums[s.k]=0);DATA.forEach(d=>{const r=rec(d);sums[r.stage]+=(Number(r.amount)||0);});
+ const max=Math.max(1,...STAGES.map(s=>counts[s.k]));
+ const M=[{l:'💰 Дохід закрито',v:money(income)+' ₴',c:'g'},{l:'📈 У воронці',v:money(pipeline)+' ₴',c:'b'},{l:'🤝 Угод',v:won.length,c:'g'},{l:'⚙️ У роботі',v:work.length,c:'b'},{l:'🎯 Конверсія',v:conv+'%',c:''},{l:'⏰ Прострочені',v:over,c:over?'r':''},{l:'✅ Відкриті задачі',v:state.tasks.filter(x=>x.status!=='done').length,c:''},{l:'📇 Лідів',v:DATA.length,c:''}];
+ let h='<div class="metrics">'+M.map(m=>'<div class="metric"><div class="lbl">'+m.l+'</div><div class="val '+m.c+'">'+m.v+'</div></div>').join('')+'</div>';
+ h+='<div class="sect">Воронка продажів</div><div class="funnel">'+STAGES.map(s=>'<div class="frow" data-goStage="'+s.k+'"><div class="fl"><span class="stagedot" style="background:'+s.c+'"></span>'+s.t+'</div><div class="ft"><div class="fb" style="width:'+Math.round(counts[s.k]/max*100)+'%;background:'+s.c+'"></div></div><div class="fc"><b>'+counts[s.k]+'</b> лідів'+(sums[s.k]?' · '+money(sums[s.k])+'₴':'')+'</div></div>').join('')+'</div>';
+ const queue=DATA.filter(d=>{const r=rec(d);return r.next&&r.next<=t&&r.stage!=='won'&&r.stage!=='lost';}).sort((a,b)=>rec(a).next.localeCompare(rec(b).next));
+ h+='<div class="sect">Черга на сьогодні '+(queue.length?'<span class="tag">'+queue.length+'</span>':'')+'</div>';
+ h+=queue.length?('<div class="queue">'+queue.slice(0,6).map(qcardHTML).join('')+'</div>'+(queue.length>6?'<div style="margin-top:10px"><button class="btn sm" data-goView="today">Показати всі →</button></div>':'')):'<div class="empty">Немає дій на сьогодні. Признач дедлайни лідам. 🎯</div>';
+ $('content').innerHTML=h;
+}
+function qcardHTML(d){
+ const r=rec(d),dc=dueClass(r.next);
+ return '<div class="qcard '+dc+'" data-i="'+d._i+'"><div>'+stagePill(r.stage)+'</div><div class="qmain"><div class="qn">'+esc(d.name)+'</div><div class="qmeta">'+esc(d.city)+' · '+esc(d.niche)+' · '+(d.rev||'—')+'★</div></div><div>'+avatar(r.assignee)+'</div><div class="qact">'+(r.nextNote?esc(r.nextNote):'дія')+'</div><div class="due '+dc+'">'+(dc==='over'?'прострочено ':'')+fmtDate(r.next)+'</div></div>';
+}
+
+/* ---------- TODAY ---------- */
+function viewToday(){
+ const t=todayStr();
+ const leads=DATA.filter(d=>{const r=rec(d);return r.next&&r.stage!=='won'&&r.stage!=='lost'&&(!me||!onlyMine.checked||r.assignee===me);});
+ const over=leads.filter(d=>rec(d).next<t).sort((a,b)=>rec(a).next.localeCompare(rec(b).next));
+ const today=leads.filter(d=>rec(d).next===t);
+ const soon=leads.filter(d=>rec(d).next>t).sort((a,b)=>rec(a).next.localeCompare(rec(b).next));
+ const myTasks=state.tasks.filter(x=>x.status!=='done'&&x.due&&x.due<=t&&(!onlyMine.checked||!me||x.assignee===me)).sort((a,b)=>a.due.localeCompare(b.due));
+ let h='';
+ if(myTasks.length){h+='<div class="qhead">📌 Задачі до виконання <span class="qc">'+myTasks.length+'</span></div><div class="queue">'+myTasks.map(taskRowHTML).join('')+'</div>';}
+ if(!leads.length&&!myTasks.length){$('content').innerHTML='<div class="empty">Ще немає запланованих дій.<br>Постав дедлайн ліду або створи задачу — і тут зʼявиться черга. 🔥</div>';return;}
+ if(over.length)h+='<div class="qhead" style="color:var(--red)">Ліди · прострочено <span class="qc">'+over.length+'</span></div><div class="queue">'+over.map(qcardHTML).join('')+'</div>';
+ h+='<div class="qhead" style="color:var(--amber)">Ліди · сьогодні <span class="qc">'+today.length+'</span></div>'+(today.length?'<div class="queue">'+today.map(qcardHTML).join('')+'</div>':'<div class="empty">На сьогодні по лідах порожньо.</div>');
+ if(soon.length)h+='<div class="qhead">Ліди · незабаром <span class="qc">'+soon.length+'</span></div><div class="queue">'+soon.slice(0,12).map(qcardHTML).join('')+'</div>';
+ $('content').innerHTML=h;
+}
+function taskRowHTML(x){
+ const d=DATA.find(d=>d._id===x.lead_id),dc=dueClass(x.due);
+ return '<div class="qcard '+dc+'" data-task="'+x.id+'"><div><input type="checkbox" data-tdone="'+x.id+'"'+(x.status==='done'?' checked':'')+'></div><div class="qmain"><div class="qn">'+esc(x.title)+'</div><div class="qmeta">'+(d?'🔗 '+esc(d.name):'загальна задача')+'</div></div><div>'+avatar(x.assignee)+'</div><div class="due '+dc+'">'+(x.due?fmtDate(x.due):'')+'</div></div>';
+}
+
+/* ---------- TASKS BOARD ---------- */
+let taskPersonFilter='';
+function viewTasks(){
+ const chips='<div class="addrow"><button class="btn pri sm" id="newTaskBtn">＋ Нова задача</button>'+
+   '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-left:6px">'+
+   '<button class="btn sm'+(taskPersonFilter===''?' pri':'')+'" data-pf="">Усі</button>'+
+   (me?'<button class="btn sm'+(taskPersonFilter==='__me'?' pri':'')+'" data-pf="__me">Мої</button>':'')+
+   state.members.map(m=>'<button class="btn sm'+(taskPersonFilter===m.id?' pri':'')+'" data-pf="'+m.id+'">'+esc(m.name)+'</button>').join('')+'</div></div>';
+ let tasks=state.tasks.slice();
+ if(taskPersonFilter==='__me'&&me)tasks=tasks.filter(x=>x.assignee===me);
+ else if(taskPersonFilter&&taskPersonFilter!=='__me')tasks=tasks.filter(x=>x.assignee===taskPersonFilter);
+ const by={};TCOLS.forEach(c=>by[c.k]=[]);tasks.forEach(x=>(by[x.status]||by.todo).push(x));
+ const board='<div class="board">'+TCOLS.map(c=>{
+   const list=by[c.k].sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999'));
+   return '<div class="col" data-tstatus="'+c.k+'"><div class="colh"><span class="stagedot" style="background:'+c.c+'"></span>'+c.t+' <span class="cc">'+list.length+'</span></div><div class="colb">'+list.map(x=>{
+     const d=DATA.find(d=>d._id===x.lead_id),dc=dueClass(x.due);
+     return '<div class="kcard" draggable="true" data-task="'+x.id+'"><div class="ktitle">'+esc(x.title)+'</div>'+(d?'<div class="klead">🔗 '+esc(d.name)+'</div>':'')+'<div class="kb">'+avatar(x.assignee)+(x.due?'<span class="due '+dc+'">'+fmtDate(x.due)+'</span>':'<span></span>')+'<span class="del" data-deltask="'+x.id+'" style="cursor:pointer;color:var(--txt3)">✕</span></div></div>';
+   }).join('')+'</div></div>';
+ }).join('')+'</div>';
+ $('content').innerHTML=chips+(state.tasks.length?board:'<div class="empty">Ще немає задач. Натисни «Нова задача», щоб призначити першу. ✅</div>'+board.replace(/<div class="board">.*/,''));
+ if(!state.tasks.length)$('content').innerHTML=chips+'<div class="empty">Ще немає задач. Натисни «＋ Нова задача», щоб призначити першу комусь із команди. ✅</div>';
+}
+
+/* ---------- TABLE ---------- */
+function viewTable(r){
+ const rows=r.map(d=>{const rc=rec(d),dc=dueClass(rc.next);
+  return '<tr data-i="'+d._i+'"><td class="n">'+(d._i+1)+'</td>'+
+   '<td><span class="cellname">'+esc(d.name)+'</span><a class="gopen" href="'+gmaps(d)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">↗</a><br><span class="subname">'+esc(d.region)+' · '+esc(d.niche)+'</span></td>'+
+   '<td>'+esc(d.city)+'</td><td>'+stagePill(rc.stage)+'</td>'+
+   '<td>'+avatar(rc.assignee)+'</td>'+
+   '<td>'+(rc.next?'<span class="due '+dc+'">'+fmtDate(rc.next)+(rc.nextNote?' · '+esc(rc.nextNote):'')+'</span>':'<span class="mut">—</span>')+'</td>'+
+   '<td class="amt">'+(rc.amount?money(rc.amount)+' ₴':'<span class="mut">—</span>')+'</td>'+
+   '<td>'+(d.rev||'—')+'</td><td class="det-col mut" style="max-width:300px;font-size:12.5px">'+esc(d.details)+'</td></tr>';
+ }).join('');
+ $('content').innerHTML='<table class="tbl"><thead><tr><th class="n">#</th><th>Бізнес</th><th>Місто</th><th>Етап</th><th>Хто</th><th>Наступна дія</th><th>Сума</th><th>★</th><th class="det-col">Деталі</th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+
+/* ---------- LEADS BOARD ---------- */
+function viewBoard(r){
+ const by={};STAGES.forEach(s=>by[s.k]=[]);r.forEach(d=>by[rec(d).stage].push(d));
+ $('content').innerHTML='<div class="board">'+STAGES.map(s=>{const list=by[s.k],sum=list.reduce((x,d)=>x+(Number(rec(d).amount)||0),0);
+   return '<div class="col" data-stage="'+s.k+'"><div class="colh"><span class="stagedot" style="background:'+s.c+'"></span>'+s.t+' <span class="cc">'+list.length+'</span>'+(sum?'<span class="cs">'+money(sum)+'₴</span>':'')+'</div><div class="colb">'+list.map(d=>{const rc=rec(d),dc=dueClass(rc.next);
+     return '<div class="kcard" draggable="true" data-i="'+d._i+'"><div class="kn">'+esc(d.name)+'</div><div class="km">'+esc(d.city)+' · '+(d.rev||'—')+'★</div><div class="kb">'+avatar(rc.assignee)+'<span class="amt" style="font-size:12px">'+(rc.amount?money(rc.amount)+'₴':'')+'</span>'+(rc.next?'<span class="due '+dc+'">'+fmtDate(rc.next)+'</span>':'')+'</div></div>';
+   }).join('')+'</div></div>';
+ }).join('')+'</div>';
+}
+
+/* ---------- TEAM ---------- */
+function viewTeam(){
+ const all=DATA.map(rec);
+ const stats=state.members.map(m=>{
+   const leads=DATA.filter(d=>rec(d).assignee===m.id);
+   const rc=leads.map(rec);
+   const won=rc.filter(r=>r.stage==='won'),active=rc.filter(r=>ACTIVE.has(r.stage));
+   const income=won.reduce((s,r)=>s+(Number(r.amount)||0),0);
+   const decided=won.length+rc.filter(r=>r.stage==='lost').length;
+   const tOpen=state.tasks.filter(x=>x.assignee===m.id&&x.status!=='done').length;
+   const tDone=state.tasks.filter(x=>x.assignee===m.id&&x.status==='done').length;
+   return {m,leads:leads.length,active:active.length,won:won.length,income,conv:decided?Math.round(won.length/decided*100):0,tOpen,tDone};
+ }).sort((a,b)=>b.income-a.income);
+ let h='<div class="addrow"><input id="newMemberName" placeholder="Імʼя нового учасника" style="border:1px solid var(--line2);border-radius:7px;padding:7px 10px"><button class="btn pri" id="addMemberBtn">＋ Додати</button></div>';
+ if(!state.members.length)h+='<div class="empty">Ще немає учасників. Додай себе й партнерів — і зможете призначати ліди та задачі одне одному. 👥</div>';
+ h+=stats.map((s,i)=>'<div class="tcard"><div style="display:flex;align-items:center;gap:10px;flex:1;min-width:180px">'+avatar(s.m.id,'lg')+'<div><b>'+esc(s.m.name)+(s.m.id===me?' · це я':'')+'</b>'+(i===0&&s.income>0?' 🏆':'')+'<br><span class="mut" style="font-size:12px">'+esc(s.m.id.slice(0,8))+'</span></div></div>'+
+   '<div class="tstat"><b>'+s.leads+'</b><span>лідів</span></div>'+
+   '<div class="tstat"><b class="val b" style="color:var(--acc)">'+s.active+'</b><span>у роботі</span></div>'+
+   '<div class="tstat"><b style="color:var(--green)">'+s.won+'</b><span>угод</span></div>'+
+   '<div class="tstat"><b style="color:var(--green)">'+money(s.income)+'</b><span>₴ дохід</span></div>'+
+   '<div class="tstat"><b>'+s.conv+'%</b><span>конверсія</span></div>'+
+   '<div class="tstat"><b>'+s.tOpen+'/'+s.tDone+'</b><span>задачі</span></div>'+
+   '<button class="btn sm dng" data-delmember="'+s.m.id+'">Видалити</button></div>').join('');
+ $('content').innerHTML=h;
+}
+
+/* ---------- DETAIL PANEL ---------- */
+function detailHTML(d){
+ const rc=rec(d),tel=digits(d.phone),wa=tel.replace('+','');
+ const stgBtns=STAGES.map(s=>'<button data-stage="'+s.k+'" class="'+(rc.stage===s.k?'on':'')+'" style="'+(rc.stage===s.k?'background:'+s.bg+';color:'+s.c:'')+'"><span class="stagedot" style="background:'+s.c+'"></span>'+s.t+'</button>').join('');
+ const notes=(rc.notes||[]).slice().reverse().map((n,idx)=>'<div class="note"><span class="del" data-del="'+(rc.notes.length-1-idx)+'">✕</span><div class="t">'+esc(n.t)+(n.by?' · '+esc(n.by):'')+'</div>'+esc(n.text)+'</div>').join('')||'<div class="mut" style="font-size:12.5px">Поки нотаток немає.</div>';
+ const leadTasks=state.tasks.filter(x=>x.lead_id===d._id);
+ const subt=leadTasks.map(x=>'<div class="subtask'+(x.status==='done'?' done':'')+'"><input type="checkbox" data-subdone="'+x.id+'"'+(x.status==='done'?' checked':'')+'><span class="st-title">'+esc(x.title)+'</span>'+avatar(x.assignee,'sm')+(x.due?'<span class="due '+dueClass(x.due)+'">'+fmtDate(x.due)+'</span>':'')+'<span class="del" data-deltask="'+x.id+'" style="cursor:pointer;color:var(--txt3)">✕</span></div>').join('');
+ return '<div class="ptitle">'+esc(d.name)+'</div><div class="pmeta">'+esc(d.region)+' · '+esc(d.city)+' · '+esc(d.niche)+' · '+(d.rev||'—')+' відгуків · Сайт: '+esc(d.site)+'</div>'+
+   '<div class="qacts"><a class="btn call" href="tel:'+tel+'">📞 '+esc(d.phone)+'</a><a class="btn v" href="viber://chat?number='+encodeURIComponent(tel)+'">Viber</a><a class="btn w" href="https://wa.me/'+wa+'" target="_blank" rel="noopener">WhatsApp</a><a class="btn g" href="'+gmaps(d)+'" target="_blank" rel="noopener">Maps</a></div>'+
+   '<div class="props">'+
+     '<div class="prop"><div class="pk">🏷️ Етап</div><div class="pv"><div class="stgpick" data-stg>'+stgBtns+'</div></div></div>'+
+     '<div class="prop"><div class="pk">👤 Виконавець</div><div class="pv"><select data-f="assignee">'+memberOptions(rc.assignee)+'</select></div></div>'+
+     '<div class="prop"><div class="pk">💰 Сума угоди</div><div class="pv"><input type="number" data-f="amount" value="'+esc(rc.amount)+'" placeholder="напр. 8000"></div></div>'+
+     '<div class="prop"><div class="pk">📅 Наступна дія</div><div class="pv"><input type="date" data-f="next" value="'+esc(rc.next)+'"></div></div>'+
+     '<div class="prop"><div class="pk">✅ Що зробити</div><div class="pv"><input type="text" data-f="nextNote" value="'+esc(rc.nextNote)+'" placeholder="передзвонити, скинути чернетку…"></div></div>'+
+   '</div>'+
+   '<div class="block"><h4>Задачі по ліду <button class="btn sm" data-newtaskfor style="float:right">＋ Задача</button></h4>'+(subt?'<div class="subtasks">'+subt+'</div>':'<div class="mut" style="font-size:12.5px">Немає задач. Створи й признач комусь.</div>')+'</div>'+
+   '<div class="block"><h4>Деталі бізнесу</h4><div class="body">'+esc(d.details)+'</div></div>'+
+   '<div class="block"><h4>Чому це тепла заявка</h4><div class="body">'+esc(pitch(d))+'</div></div>'+
+   '<div class="block"><h4>Скрипт першого контакту <button class="btn sm" data-copy="script" style="float:right">Копіювати</button></h4><div class="body">'+esc(scriptTxt(d))+'</div></div>'+
+   '<div class="block"><h4>Промт для генерації сайту <button class="btn sm" data-copy="prompt" style="float:right">Копіювати</button></h4><div class="body">'+esc(d.prompt)+'</div></div>'+
+   '<div class="block"><h4>Нотатки та історія</h4><div class="logbtns"><button class="btn sm" data-log="Подзвонив">☎ Подзвонив</button><button class="btn sm" data-log="Не відповіли">✖ Не відповіли</button><button class="btn sm" data-log="Скинув чернетку">📤 Чернетка</button><button class="btn sm" data-log="Зацікавився">👍 Інтерес</button></div><textarea class="note" data-note placeholder="Додати нотатку… (Ctrl+Enter)"></textarea><div style="margin-top:7px"><button class="btn pri sm" data-addnote>Додати</button></div><div class="notes">'+notes+'</div></div>';
+}
+let panelLead=null;
+function openPanel(d){panelLead=d;$('pbody').innerHTML=detailHTML(d);setPStage(d);bindPanel(d);$('ovl').classList.add('show');$('panel').classList.add('show');}
+function closePanel(){$('ovl').classList.remove('show');$('panel').classList.remove('show');panelLead=null;}
+function setPStage(d){const s=STG[rec(d).stage];const ps=$('pStage');ps.style.background=s.bg;ps.style.color=s.c;ps.innerHTML='<span class="d" style="background:'+s.c+'"></span>'+s.t;}
+function refreshPanel(d){$('pbody').innerHTML=detailHTML(d);setPStage(d);bindPanel(d);}
+function bindPanel(d){
+ const root=$('pbody');
+ root.querySelector('[data-stg]').addEventListener('click',e=>{const b=e.target.closest('button[data-stage]');if(!b)return;rec(d).stage=b.dataset.stage;saveLead(d._id);refreshPanel(d);renderSidebar();});
+ root.querySelectorAll('[data-f]').forEach(inp=>inp.addEventListener('input',()=>{rec(d)[inp.dataset.f]=inp.value;saveLead(d._id);if(['amount','next','assignee'].includes(inp.dataset.f))renderSidebar();}));
+ root.querySelectorAll('[data-copy]').forEach(b=>b.addEventListener('click',ev=>{ev.stopPropagation();copy(b.dataset.copy==='script'?scriptTxt(d):d.prompt,'Скопійовано');}));
+ root.querySelectorAll('[data-log]').forEach(b=>b.addEventListener('click',()=>{addNote(d,b.dataset.log,true);refreshPanel(d);renderSidebar();}));
+ const ta=root.querySelector('[data-note]'),add=root.querySelector('[data-addnote]');
+ const doAdd=()=>{if(ta.value.trim()){addNote(d,ta.value,false);refreshPanel(d);}};
+ add.addEventListener('click',doAdd);ta.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter')doAdd();});
+ root.querySelector('.notes').addEventListener('click',e=>{const x=e.target.closest('[data-del]');if(!x)return;rec(d).notes.splice(+x.dataset.del,1);saveLead(d._id);refreshPanel(d);});
+ root.querySelector('[data-newtaskfor]').addEventListener('click',()=>openTaskModal(d._id));
+ root.querySelectorAll('[data-subdone]').forEach(cb=>cb.addEventListener('change',()=>{const x=state.tasks.find(t=>t.id===cb.dataset.subdone);if(x){x.status=cb.checked?'done':'todo';Backend.saveTask(x);refreshPanel(d);renderSidebar();}}));
+ root.querySelectorAll('[data-deltask]').forEach(b=>b.addEventListener('click',()=>{const id=b.dataset.deltask;state.tasks=state.tasks.filter(t=>t.id!==id);Backend.delTask(id);refreshPanel(d);renderSidebar();}));
+}
+function addNote(d,text,advance){if(!text||!text.trim())return;const rc=rec(d);rc.notes.push({t:new Date().toLocaleString('uk-UA',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}),text:text.trim(),by:(member(me)||{}).name||''});if(advance&&rc.stage==='new')rc.stage='draft';saveLead(d._id);}
+
+/* ---------- TASK MODAL ---------- */
+function openTaskModal(leadId){
+ $('tTitle').value='';$('tDue').value='';
+ $('tAssignee').innerHTML=memberOptions(me);
+ $('tLead').innerHTML='<option value="">— без ліда —</option>'+DATA.map(d=>'<option value="'+d._id+'"'+(d._id===leadId?' selected':'')+'>'+esc(d.name)+'</option>').join('');
+ $('tmodal').classList.add('show');$('tTitle').focus();
+}
+$('tCancel').addEventListener('click',()=>$('tmodal').classList.remove('show'));
+$('tmodal').addEventListener('click',e=>{if(e.target.id==='tmodal')$('tmodal').classList.remove('show');});
+$('tSave').addEventListener('click',()=>{
+ const title=$('tTitle').value.trim();if(!title){toast('Впиши, що зробити');return;}
+ const t={id:uuid(),title,lead_id:$('tLead').value||null,assignee:$('tAssignee').value||null,due:$('tDue').value||null,status:'todo',created_by:me||null,created_at:new Date().toISOString()};
+ state.tasks.push(t);Backend.saveTask(t);$('tmodal').classList.remove('show');toast('Задачу створено');renderSidebar();if(panelLead)refreshPanel(panelLead);rerender();
+});
+
+/* ---------- ROUTER ---------- */
+let view='dashboard';
+const META={dashboard:{t:'📊 Дашборд',s:'Огляд воронки, доходу та черги дій.',c:'Дашборд',tb:false},today:{t:'🔥 Сьогодні',s:'Черга дій: задачі та ліди на сьогодні.',c:'Сьогодні',tb:true},tasks:{t:'✅ Задачі',s:'Спільна дошка задач. Тягни між колонками, признач людині.',c:'Задачі',tb:false},table:{t:'📋 Усі ліди',s:'База лідів. Клік по рядку — відкрити картку.',c:'Усі ліди',tb:true},board:{t:'🗂️ Дошка лідів',s:'Тягни картки між етапами воронки.',c:'Дошка',tb:true},team:{t:'👥 Команда',s:'Учасники, призначення та статистика.',c:'Команда',tb:false}};
+function setView(v){
+ view=v;
+ document.querySelectorAll('.side .nav[data-view]').forEach(n=>n.classList.toggle('on',n.dataset.view===v&&!(v==='table'&&stageFilter)));
+ const m=META[v];let title=m.t,sub=m.s;
+ if(v==='table'&&stageFilter){const s=STG[stageFilter];title=s.t;sub='Ліди на етапі «'+s.t+'».';}
+ $('pageTitle').innerHTML=title;$('pageSub').textContent=sub;$('crumb').textContent='Робочий простір / '+(v==='table'&&stageFilter?STG[stageFilter].t:m.c);
+ $('toolbar').style.display=m.tb?'':'none';renderSidebar();rerender();$('main').scrollTop=0;
+}
+function rerender(){
+ if(view==='dashboard'){viewDashboard();$('count').textContent='';return;}
+ if(view==='tasks'){viewTasks();$('count').textContent='';return;}
+ if(view==='team'){viewTeam();$('count').textContent='';return;}
+ const r=filtered();$('count').textContent=r.length+' із '+DATA.length;
+ if(view==='today')viewToday();else if(view==='table')viewTable(r);else if(view==='board')viewBoard(r);
+}
+function rerenderAll(){renderSidebar();refreshAssigneeFilter();rerender();}
+
+/* sidebar clicks */
+$('side').addEventListener('click',e=>{
+ const v=e.target.closest('.nav[data-view]');if(v){stageFilter='';setView(v.dataset.view);$('side').classList.remove('open');return;}
+ const sg=e.target.closest('.nav[data-stage]');if(sg){stageFilter=sg.dataset.stage;setView('table');$('side').classList.remove('open');return;}
+});
+/* content clicks */
+$('content').addEventListener('click',e=>{
+ if(e.target.closest('a'))return;
+ if(e.target.closest('#newTaskBtn')){openTaskModal(null);return;}
+ const pf=e.target.closest('[data-pf]');if(pf){taskPersonFilter=pf.dataset.pf;viewTasks();return;}
+ const gv=e.target.closest('[data-goView]');if(gv){setView(gv.dataset.goView);return;}
+ const gs=e.target.closest('[data-goStage]');if(gs){stageFilter=gs.dataset.goStage;setView('table');return;}
+ const td=e.target.closest('[data-tdone]');if(td){const x=state.tasks.find(t=>t.id===td.dataset.tdone);if(x){x.status=td.checked?'done':'todo';Backend.saveTask(x);renderSidebar();rerender();}return;}
+ const dt=e.target.closest('[data-deltask]');if(dt){const id=dt.dataset.deltask;state.tasks=state.tasks.filter(t=>t.id!==id);Backend.delTask(id);renderSidebar();rerender();return;}
+ const am=e.target.closest('#addMemberBtn');if(am){const inp=$('newMemberName');if(inp.value.trim()){const mm={id:uuid(),name:inp.value.trim(),color:PALETTE[state.members.length%PALETTE.length],pin:''};state.members.push(mm);Backend.saveMember(mm);renderMe();rerenderAll();toast('Учасника додано');}return;}
+ const dm=e.target.closest('[data-delmember]');if(dm){if(confirm('Видалити учасника? Його ліди/задачі лишаться, але без виконавця.')){const id=dm.dataset.delmember;state.members=state.members.filter(m=>m.id!==id);Backend.delMember(id);if(me===id){me='';localStorage.removeItem('crm_me');}renderMe();rerenderAll();}return;}
+ const task=e.target.closest('[data-task]');if(task&&!e.target.closest('input')){const x=state.tasks.find(t=>t.id===task.dataset.task);if(x&&x.lead_id){const d=DATA.find(d=>d._id===x.lead_id);if(d)openPanel(d);}return;}
+ const card=e.target.closest('[data-i]');if(card){openPanel(DATA[+card.dataset.i]);}
+});
+/* drag & drop: leads board + tasks board */
+let dragI=null,dragTask=null;
+$('content').addEventListener('dragstart',e=>{const c=e.target.closest('.kcard');if(!c)return;if(c.dataset.i!=null)dragI=+c.dataset.i;if(c.dataset.task)dragTask=c.dataset.task;e.dataTransfer.effectAllowed='move';});
+$('content').addEventListener('dragover',e=>{const col=e.target.closest('.col');if(!col)return;e.preventDefault();document.querySelectorAll('.col').forEach(c=>c.classList.toggle('dragover',c===col));});
+$('content').addEventListener('drop',e=>{const col=e.target.closest('.col');document.querySelectorAll('.col').forEach(c=>c.classList.remove('dragover'));if(!col)return;e.preventDefault();
+ if(col.dataset.stage&&dragI!=null){rec(DATA[dragI]).stage=col.dataset.stage;saveLead(DATA[dragI]._id);}
+ if(col.dataset.tstatus&&dragTask){const x=state.tasks.find(t=>t.id===dragTask);if(x){x.status=col.dataset.tstatus;Backend.saveTask(x);}}
+ dragI=null;dragTask=null;renderSidebar();rerender();
+});
+$('content').addEventListener('dragend',()=>document.querySelectorAll('.col').forEach(c=>c.classList.remove('dragover')));
+/* panel + misc */
+$('pClose').addEventListener('click',closePanel);$('ovl').addEventListener('click',closePanel);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePanel();$('tmodal').classList.remove('show');}});
+$('menuBtn').addEventListener('click',()=>$('side').classList.toggle('open'));
+[q,regionSel,citySel,nicheSel,assigneeSel,sortSel].forEach(el=>el.addEventListener('input',rerender));
+onlyMine.addEventListener('change',rerender);
+$('expBtn').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='crm-bekap-'+todayStr()+'.json';a.click();toast('Бекап збережено');});
+$('impBtn').addEventListener('click',()=>$('impFile').click());
+$('impFile').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const inc=JSON.parse(rd.result);state.members=inc.members||state.members;state.leadState=Object.assign(state.leadState,inc.leadState||{});state.tasks=inc.tasks||state.tasks;if(!CLOUD)LocalBackend.persist();renderMe();rerenderAll();toast('Імпортовано');}catch(err){toast('Помилка файлу');}};rd.readAsText(f);e.target.value='';});
+$('csvBtn').addEventListener('click',()=>{
+ const head=['Назва','Місто','Ніша','Регіон','Телефон','Відгуків','Сайт','Етап','Виконавець','Сума','Наступна дата','Що зробити','Нотаток'];
+ const rows=filtered().map(d=>{const rc=rec(d);return [d.name,d.city,d.niche,d.region,d.phone,d.rev,d.site,STG[rc.stage].t,(member(rc.assignee)||{}).name||'',rc.amount,rc.next,rc.nextNote,(rc.notes||[]).length];});
+ const csv='﻿'+[head].concat(rows).map(r=>r.map(v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"').join(',')).join('\n');
+ const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='zvit-'+todayStr()+'.csv';a.click();toast('CSV готовий');
+});
+
+/* ---------- BOOT ---------- */
+(async()=>{
+ try{ await Backend.init(()=>{renderMe();rerenderAll();}); }
+ catch(err){ console.error(err); toast('Помилка підключення до хмари — працюю локально'); }
+ refreshAssigneeFilter();renderMe();renderSidebar();setView('dashboard');
+})();
+window.__state=()=>state; // для перевірки
+</script>
+</body></html>
