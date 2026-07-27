@@ -379,11 +379,11 @@ const SupabaseBackend={
    state.leadState={};(l.data||[]).forEach(r=>state.leadState[r.lead_id]={stage:r.stage||'new',amount:r.amount||'',next:r.next_action||'',nextNote:r.next_note||'',assignee:r.assignee||'',notes:r.notes||[]});
    state.tasks=t.data||[];
  },
- async saveLead(id){const s=state.leadState[id];await sb.from('lead_state').upsert({lead_id:id,stage:s.stage,amount:s.amount,next_action:s.next||null,next_note:s.nextNote,assignee:s.assignee||null,notes:s.notes},{onConflict:'lead_id'});},
- async saveTask(t){await sb.from('tasks').upsert(t);},
- async delTask(id){await sb.from('tasks').delete().eq('id',id);},
- async saveMember(m){await sb.from('members').upsert(m);},
- async delMember(id){await sb.from('members').delete().eq('id',id);},
+ async saveLead(id){const s=state.leadState[id];const{error}=await sb.from('lead_state').upsert({lead_id:id,stage:s.stage,amount:s.amount===''?null:s.amount,next_action:s.next||null,next_note:s.nextNote,assignee:s.assignee||null,notes:s.notes},{onConflict:'lead_id'});if(error){console.error('saveLead',error);toast('Не вдалося зберегти: '+error.message);}},
+ async saveTask(t){const{error}=await sb.from('tasks').upsert(t);if(error){console.error('saveTask',error);toast('Не вдалося зберегти задачу: '+error.message);}},
+ async delTask(id){const{error}=await sb.from('tasks').delete().eq('id',id);if(error)console.error('delTask',error);},
+ async saveMember(m){const{error}=await sb.from('members').upsert(m);if(error){console.error('saveMember',error);toast('Не вдалося зберегти учасника: '+error.message);}},
+ async delMember(id){const{error}=await sb.from('members').delete().eq('id',id);if(error)console.error('delMember',error);},
 };
 const Backend=CLOUD?SupabaseBackend:LocalBackend;
 let saveT={};
