@@ -166,6 +166,18 @@ textarea.note{width:100%;min-height:54px;border:1px solid var(--line2);border-ra
 .tbox .fld{margin-bottom:10px}
 .tbox label{display:block;font-size:12px;color:var(--txt2);margin-bottom:4px}
 .tbox input,.tbox select{width:100%;border:1px solid var(--line2);border-radius:7px;padding:7px 9px;outline:0}
+#authScreen{position:fixed;inset:0;background:var(--side);display:flex;align-items:center;justify-content:center;z-index:300}
+#authScreen.hidden{display:none}
+.authbox{background:var(--bg);border:1px solid var(--line2);border-radius:14px;padding:28px 26px;width:min(340px,92vw);box-shadow:0 12px 40px rgba(15,15,15,.14)}
+.authbox h2{margin:0 0 4px;font-size:17px}
+.authbox p.sub{margin:0 0 18px;color:var(--txt3);font-size:12.5px}
+.authbox label{display:block;font-size:12px;color:var(--txt2);margin-bottom:4px;margin-top:12px}
+.authbox input{width:100%;border:1px solid var(--line2);border-radius:7px;padding:8px 10px;outline:0}
+.authbox input:focus{border-color:var(--acc)}
+.authbox .err{color:var(--red);font-size:12.5px;margin-top:10px;min-height:1em}
+.authbox button{width:100%;margin-top:16px;padding:9px;border:0;border-radius:7px;background:var(--acc);color:#fff;font-weight:600;cursor:pointer}
+.authbox button:disabled{opacity:.6;cursor:default}
+.app.hidden{display:none}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#37352f;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;z-index:200;pointer-events:none}
 .toast.show{opacity:1}
 .hidden{display:none!important}.menu-toggle{display:none}
@@ -175,7 +187,19 @@ textarea.note{width:100%;min-height:54px;border:1px solid var(--line2);border-ra
 }
 </style></head>
 <body>
-<div class="app">
+<div id="authScreen" class="hidden">
+ <div class="authbox">
+   <h2>Ліди · Захід+Центр</h2>
+   <p class="sub">Вхід у командний простір</p>
+   <label>Email</label>
+   <input id="authEmail" type="email" autocomplete="username" placeholder="you@example.com">
+   <label>Пароль</label>
+   <input id="authPass" type="password" autocomplete="current-password" placeholder="••••••••">
+   <div class="err" id="authErr"></div>
+   <button id="authBtn">Увійти</button>
+ </div>
+</div>
+<div class="app hidden" id="appRoot">
  <aside class="side" id="side">
    <div class="ws"><span class="logo">Л</span><div>Ліди · Захід+Центр<small>командний простір<span class="cloudpill off" id="cloudPill">локально</span></small></div></div>
    <div class="me" id="meBtn"><span id="meAv"></span><div class="who" id="meWho"><b>Обери себе</b><small>натисни, щоб увійти</small></div><span class="caret">▾</span>
@@ -241,8 +265,8 @@ const DATA = [{"name": "Стоматологія Slivko Dental", "city": "Ума
 DATA.forEach((d,i)=>{d._i=i; d._id=(d.name+'|'+d.city+'|'+d.phone).replace(/\s+/g,' ').trim();});
 
 /* ============ КОНФІГ ХМАРИ (заповни для спільного доступу) ============ */
-const SUPABASE_URL=''; // напр. https://xxxx.supabase.co
-const SUPABASE_KEY=''; // публічний anon key
+const SUPABASE_URL='https://chnalwmtvbfvjtjullxm.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNobmFsd210dmJmdmp0anVsbHhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxNDkwMjIsImV4cCI6MjEwMDcyNTAyMn0.pqrFTnVt1GuJVCSsO4wEG-MAWf3LdvJjJ2K998B6w1w';
 const CLOUD=!!(SUPABASE_URL&&SUPABASE_KEY);
 /* ==================================================================== */
 
@@ -306,11 +330,48 @@ const LocalBackend={
  async saveMember(){this.persist();},
  async delMember(){this.persist();},
 };
+let AUTH_USER=null;
+function showAuthScreen(){$('authScreen').classList.remove('hidden');$('appRoot').classList.add('hidden');}
+function hideAuthScreen(){$('authScreen').classList.add('hidden');$('appRoot').classList.remove('hidden');}
+function bindAuthForm(){
+ const btn=$('authBtn'),email=$('authEmail'),pass=$('authPass'),err=$('authErr');
+ const submit=async()=>{
+   err.textContent='';btn.disabled=true;btn.textContent='Вхід…';
+   const {error}=await sb.auth.signInWithPassword({email:email.value.trim(),password:pass.value});
+   btn.disabled=false;btn.textContent='Увійти';
+   if(error) err.textContent='Невірний email або пароль.';
+ };
+ btn.addEventListener('click',submit);
+ pass.addEventListener('keydown',e=>{if(e.key==='Enter')submit();});
+}
 const SupabaseBackend={
  async init(onChange){
    sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+   this._onChange=onChange;
+   bindAuthForm();
+   const {data:{session}}=await sb.auth.getSession();
+   if(session) await this._enter(session); else showAuthScreen();
+   sb.auth.onAuthStateChange((event,session)=>{
+     if(event==='SIGNED_IN') this._enter(session);
+     if(event==='SIGNED_OUT'){AUTH_USER=null;me='';showAuthScreen();}
+   });
+ },
+ async _enter(session){
+   AUTH_USER=session.user;
+   await this.ensureProfile();
+   me=AUTH_USER.id;
    await this.reload();
-   sb.channel('rt').on('postgres_changes',{event:'*',schema:'public'},()=>{this.reload().then(()=>onChange&&onChange());}).subscribe();
+   if(!this._sub){this._sub=sb.channel('rt').on('postgres_changes',{event:'*',schema:'public'},()=>{this.reload().then(()=>this._onChange&&this._onChange());}).subscribe();}
+   hideAuthScreen();
+   this._onChange&&this._onChange();
+ },
+ async ensureProfile(){
+   const {data}=await sb.from('members').select('*').eq('id',AUTH_USER.id).maybeSingle();
+   if(!data){
+     const guess=(AUTH_USER.email||'').split('@')[0];
+     const name=(prompt('Введіть своє імʼя (побачить уся команда):',guess)||guess||'Я').trim()||'Я';
+     await sb.from('members').upsert({id:AUTH_USER.id,name,color:PALETTE[Math.floor(Math.random()*PALETTE.length)],pin:''});
+   }
  },
  async reload(){
    const [m,l,t]=await Promise.all([sb.from('members').select('*'),sb.from('lead_state').select('*'),sb.from('tasks').select('*')]);
@@ -359,13 +420,18 @@ function filtered(){
 /* ---------- identity ---------- */
 function renderMe(){
  const m=member(me);
- if(m){$('meAv').outerHTML='<span id="meAv">'+avatar(me,'lg')+'</span>';$('meWho').innerHTML='<b>'+esc(m.name)+'</b><small>це я</small>';}
- else{$('meAv').outerHTML='<span id="meAv"><span class="av none lg">?</span></span>';$('meWho').innerHTML='<b>Обери себе</b><small>натисни, щоб увійти</small>';}
- $('meDrop').innerHTML=state.members.map(m=>'<div class="mi" data-me="'+m.id+'">'+avatar(m.id)+esc(m.name)+(m.id===me?' ✓':'')+'</div>').join('')+
-   '<div class="mi" data-addme style="color:var(--acc)">＋ Додати учасника</div>';
+ if(m){$('meAv').outerHTML='<span id="meAv">'+avatar(me,'lg')+'</span>';$('meWho').innerHTML='<b>'+esc(m.name)+'</b><small>'+(CLOUD?'це я · онлайн':'це я')+'</small>';}
+ else{$('meAv').outerHTML='<span id="meAv"><span class="av none lg">?</span></span>';$('meWho').innerHTML='<b>'+(CLOUD?'Налаштування…':'Обери себе')+'</b><small>'+(CLOUD?'':'натисни, щоб увійти')+'</small>';}
+ if(CLOUD){
+   $('meDrop').innerHTML='<div class="mi" data-signout style="color:var(--red)">⎋ Вийти ('+esc((AUTH_USER&&AUTH_USER.email)||'')+')</div>';
+ }else{
+   $('meDrop').innerHTML=state.members.map(m=>'<div class="mi" data-me="'+m.id+'">'+avatar(m.id)+esc(m.name)+(m.id===me?' ✓':'')+'</div>').join('')+
+     '<div class="mi" data-addme style="color:var(--acc)">＋ Додати учасника</div>';
+ }
 }
-$('meBtn').addEventListener('click',e=>{if(e.target.closest('[data-me],[data-addme]'))return;$('meDrop').classList.toggle('show');});
-$('meDrop').addEventListener('click',e=>{
+$('meBtn').addEventListener('click',e=>{if(e.target.closest('[data-me],[data-addme],[data-signout]'))return;$('meDrop').classList.toggle('show');});
+$('meDrop').addEventListener('click',async e=>{
+ if(e.target.closest('[data-signout]')){await sb.auth.signOut();return;}
  const mi=e.target.closest('[data-me]');if(mi){me=mi.dataset.me;localStorage.setItem('crm_me',me);$('meDrop').classList.remove('show');renderMe();rerenderAll();return;}
  if(e.target.closest('[data-addme]')){const name=prompt('Імʼя учасника:');if(name&&name.trim()){const m={id:uuid(),name:name.trim(),color:PALETTE[state.members.length%PALETTE.length],pin:''};state.members.push(m);Backend.saveMember(m);me=m.id;localStorage.setItem('crm_me',me);$('meDrop').classList.remove('show');renderMe();refreshAssigneeFilter();rerenderAll();toast('Учасника додано');}}
 });
@@ -490,7 +556,9 @@ function viewTeam(){
    const tDone=state.tasks.filter(x=>x.assignee===m.id&&x.status==='done').length;
    return {m,leads:leads.length,active:active.length,won:won.length,income,conv:decided?Math.round(won.length/decided*100):0,tOpen,tDone};
  }).sort((a,b)=>b.income-a.income);
- let h='<div class="addrow"><input id="newMemberName" placeholder="Імʼя нового учасника" style="border:1px solid var(--line2);border-radius:7px;padding:7px 10px"><button class="btn pri" id="addMemberBtn">＋ Додати</button></div>';
+ let h=CLOUD
+   ?'<div class="mut" style="font-size:12.5px;margin-bottom:10px">Нових учасників додає власник у Supabase (Authentication → Users → Add user). Після першого входу людина сама з’явиться тут.</div>'
+   :'<div class="addrow"><input id="newMemberName" placeholder="Імʼя нового учасника" style="border:1px solid var(--line2);border-radius:7px;padding:7px 10px"><button class="btn pri" id="addMemberBtn">＋ Додати</button></div>';
  if(!state.members.length)h+='<div class="empty">Ще немає учасників. Додай себе й партнерів — і зможете призначати ліди та задачі одне одному. 👥</div>';
  h+=stats.map((s,i)=>'<div class="tcard"><div style="display:flex;align-items:center;gap:10px;flex:1;min-width:180px">'+avatar(s.m.id,'lg')+'<div><b>'+esc(s.m.name)+(s.m.id===me?' · це я':'')+'</b>'+(i===0&&s.income>0?' 🏆':'')+'<br><span class="mut" style="font-size:12px">'+esc(s.m.id.slice(0,8))+'</span></div></div>'+
    '<div class="tstat"><b>'+s.leads+'</b><span>лідів</span></div>'+
@@ -629,6 +697,7 @@ $('csvBtn').addEventListener('click',()=>{
 
 /* ---------- BOOT ---------- */
 (async()=>{
+ if(!CLOUD)$('appRoot').classList.remove('hidden');
  try{ await Backend.init(()=>{renderMe();rerenderAll();}); }
  catch(err){ console.error(err); toast('Помилка підключення до хмари — працюю локально'); }
  refreshAssigneeFilter();renderMe();renderSidebar();setView('dashboard');
