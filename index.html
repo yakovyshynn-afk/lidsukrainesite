@@ -191,7 +191,8 @@ textarea.note{width:100%;min-height:54px;border:1px solid var(--line2);border-ra
 .qz-opt.wrong{color:var(--red);text-decoration:line-through}
 #callMode{position:fixed;inset:0;background:var(--bg);z-index:150;display:none;flex-direction:column}
 #callMode.show{display:flex}
-.cmhead{display:flex;align-items:center;gap:10px;padding:14px 22px;border-bottom:1px solid var(--line);background:var(--bg)}
+.cmhead{display:flex;align-items:center;gap:10px;padding:14px 22px;border-bottom:1px solid var(--line);background:var(--bg);flex-wrap:wrap}
+.cmhead #cmProgress{white-space:nowrap;flex-shrink:0}
 .cmbody{flex:1;overflow-y:auto;padding:28px;display:flex;justify-content:center;background:var(--side)}
 .cmcard{width:min(640px,100%)}
 .cmcard h2{margin:0 0 5px;font-size:23px;font-weight:800;letter-spacing:-.01em}
@@ -438,7 +439,8 @@ const PROMPT_LECTURE='Кожен промт у картці ліда — це т
 'Після генерації — переходь у «Показ клієнту» й дзвони за вбудованим «Скриптом першого контакту», спираючись на «Чому це тепла заявка» в картці ліда. Це і є весь цикл: тепла заявка → якісний промт → показ → правки → передача → угода.';
 const OWNER_TRACK={steps:[
  {id:'ownr1',t:'Мотивація відділу продажу — як отримувати максимум результату від команди',u:'https://nethunt.ua/blog/motyvatsiya-viddilu-prodazhiv/'},
- {id:'ownr2',t:'Курс «Директор з продажу»: як побудувати систему, що стабільно виконує план (Laba)',u:'https://laba.ua/lecture/377-direktor-po-prodazham-course'},
+ {id:'ownr2',t:'Лідерство у команді: Становлення лідера — безкоштовний курс Prometheus',u:'https://prometheus.org.ua/prometheus-free/team-leadership/'},
+ {id:'ownr2b',t:'Лідерство в командах: побудова ефективної командної культури — безкоштовний курс Prometheus',u:'https://prometheus.org.ua/prometheus-free/team-leadership-team-culture/'},
  {id:'ownr3',t:'МОТИВАЦІЯ Ukraine — канал для тих, хто не здається (корисно ще й транслювати команді)',u:'https://www.youtube.com/@motivation_Ukraine/videos'},
  {id:'ownr4',t:'Психологічний тайм-менеджмент: як встигати НЕ все — коли задач у рази більше, ніж у команди',u:'https://www.youtube.com/watch?v=UnFKcz5TWXA'},
  {id:'ownr5',t:'Фінансова грамотність та інвестиції — Prometheus (масштабувати особистий дохід, не тільки командний)',u:'https://prometheus.org.ua/prometheus-free/financial-literacy-and-investments-for-beginners/'}
