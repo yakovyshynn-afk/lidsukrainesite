@@ -248,6 +248,7 @@ textarea.note{width:100%;min-height:54px;border:1px solid var(--line2);border-ra
    <div class="nav" data-view="table"><span class="ic">📋</span>Усі ліди<span class="cnt" id="allCnt"></span></div>
    <div class="nav" data-view="board"><span class="ic">🗂️</span>Дошка лідів</div>
    <div class="nav" data-view="team"><span class="ic">👥</span>Команда<span class="cnt" id="teamCnt"></span></div>
+   <div class="nav" data-view="academy"><span class="ic">🎓</span>Академія</div>
    <div class="navlbl">Етапи воронки</div>
    <div id="stageNav"></div>
    <div class="tools">
@@ -621,28 +622,62 @@ function viewDashboard(){
  const queue=DATA.filter(d=>{const r=rec(d);return r.next&&r.next<=t&&r.stage!=='won'&&r.stage!=='lost';}).sort((a,b)=>rec(a).next.localeCompare(rec(b).next));
  h+='<div class="sect">Черга на сьогодні '+(queue.length?'<span class="tag">'+queue.length+'</span>':'')+'</div>';
  h+=queue.length?('<div class="queue">'+queue.slice(0,6).map(qcardHTML).join('')+'</div>'+(queue.length>6?'<div style="margin-top:10px"><button class="btn sm" data-goView="today">Показати всі →</button></div>':'')):'<div class="empty">Немає дій на сьогодні. Признач дедлайни лідам. 🎯</div>';
- h+='<div class="sect">📚 Навчання й мотивація</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;max-width:900px">'+
-   '<div class="block"><h4>🖥️ Робити сайти в Claude Code</h4>'+
-     '<a class="body" style="display:block;margin-bottom:6px" href="https://www.youtube.com/watch?v=OdSXY4YgmZA" target="_blank" rel="noopener">▶ Claude Code Tutorial for Beginners: Build Website with AI</a>'+
-     '<a class="body" style="display:block;margin-bottom:6px" href="https://www.youtube.com/watch?v=qHm-WbpvZeg" target="_blank" rel="noopener">▶ Build Stunning Websites With Claude Code (5 prompts)</a>'+
-     '<a class="body" style="display:block" href="https://www.youtube.com/watch?v=fDTwHIKltpc" target="_blank" rel="noopener">▶ The EASY way to build a website with Claude Code</a>'+
-   '</div>'+
-   '<div class="block"><h4>☎️ Холодні дзвінки (укр.)</h4>'+
-     '<a class="body" style="display:block;margin-bottom:6px" href="https://www.youtube.com/watch?v=bk4mM0Ce0Lg" target="_blank" rel="noopener">▶ 11 кроків до холодних дзвінків — як не боятися дзвонити</a>'+
-     '<a class="body" style="display:block" href="https://www.youtube.com/watch?v=oV3uoS6QVd4" target="_blank" rel="noopener">▶ Холодні дзвінки: як із виклику зробити можливість</a>'+
-   '</div>'+
-   '<div class="block"><h4>📈 Маркетинг і продажі (укр.)</h4>'+
-     '<a class="body" style="display:block" href="https://www.youtube.com/@LetsStartMarketing" target="_blank" rel="noopener">▶ Let’s Start Marketing — канал про маркетинг і продажі</a>'+
-   '</div>'+
-   '<div class="block"><h4>🖥️ Сайти через AI (рос.)</h4>'+
-     '<a class="body" style="display:block;margin-bottom:6px" href="https://www.youtube.com/watch?v=r4PsvPLXETE" target="_blank" rel="noopener">▶ Claude Code создал сайт за 10 минут</a>'+
-     '<a class="body" style="display:block;margin-bottom:6px" href="https://www.youtube.com/watch?v=nzZUtbpJzDs" target="_blank" rel="noopener">▶ Строить красивые сайты с Claude Code слишком легко</a>'+
-     '<a class="body" style="display:block" href="https://www.youtube.com/watch?v=HsCygsPDBwA" target="_blank" rel="noopener">▶ Идеальный сайт на Claude Code за 20 минут (для новичков)</a>'+
-   '</div>'+
-   '<div class="block"><h4>🌙 Мотивація на вечір</h4>'+
-     '<a class="body" style="display:block;margin-bottom:6px" href="https://www.youtube.com/watch?v=MgtZH9LhOwI" target="_blank" rel="noopener">▶ 5 хвилин, які змінять твоє життя (укр.)</a>'+
-     '<a class="body" style="display:block" href="https://www.youtube.com/watch?v=iWIBwP_mTjY" target="_blank" rel="noopener">▶ 15 минут сильнейшей мотивации для жизни и успеха (рос.)</a>'+
-   '</div>'+
+ $('content').innerHTML=h;
+}
+
+/* ---------- ACADEMY ---------- */
+function acadCard(title,links){
+ return '<div class="block"><h4>'+title+'</h4>'+links.map((l,i)=>'<a class="body" style="display:block'+(i<links.length-1?';margin-bottom:6px':'')+'" href="'+l.u+'" target="_blank" rel="noopener">▶ '+esc(l.t)+'</a>').join('')+'</div>';
+}
+function viewAcademy(){
+ let h='<div class="hero"><div class="htxt"><h2>🎓 Внутрішня академія</h2><p>Заходь сюди не тільки по роботі: розвивай смак у дизайні, вчись новому, підзаряджайся мотивацією — коли є хвилина чи немає дзвінків.</p></div></div>';
+ h+='<div class="mut" style="font-size:13px;font-style:italic;margin:-14px 0 22px;padding:0 2px">💬 '+esc(dailyQuote())+'</div>';
+
+ h+='<div class="sect">🖥️ Робити сайти через AI</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;max-width:900px;margin-bottom:8px">'+
+   acadCard('Claude Code (англ.)',[
+     {t:'Claude Code Tutorial for Beginners: Build Website with AI',u:'https://www.youtube.com/watch?v=OdSXY4YgmZA'},
+     {t:'Build Stunning Websites With Claude Code (5 prompts)',u:'https://www.youtube.com/watch?v=qHm-WbpvZeg'},
+     {t:'The EASY way to build a website with Claude Code',u:'https://www.youtube.com/watch?v=fDTwHIKltpc'}
+   ])+
+   acadCard('Claude Code (рос.)',[
+     {t:'Claude Code создал сайт за 10 минут',u:'https://www.youtube.com/watch?v=r4PsvPLXETE'},
+     {t:'Строить красивые сайты с Claude Code слишком легко',u:'https://www.youtube.com/watch?v=nzZUtbpJzDs'},
+     {t:'Идеальный сайт на Claude Code за 20 минут (для новичков)',u:'https://www.youtube.com/watch?v=HsCygsPDBwA'}
+   ])+
+ '</div>';
+
+ h+='<div class="sect">🎨 Дизайн-натхнення</div><div class="block" style="max-width:900px;margin-bottom:8px"><div class="body">Живі галереї крутих сайтів — гортай для ока, потім підказуй клієнтам стиль і сам чернетки роби кращими:</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">'+
+   '<a class="btn sm" href="https://www.awwwards.com/" target="_blank" rel="noopener">Awwwards</a>'+
+   '<a class="btn sm" href="https://land-book.com/" target="_blank" rel="noopener">Land-book</a>'+
+   '<a class="btn sm" href="https://www.siteinspire.com/" target="_blank" rel="noopener">SiteInspire</a>'+
+ '</div></div>';
+
+ h+='<div class="sect">☎️ Продажі й переговори</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;max-width:900px;margin-bottom:8px">'+
+   acadCard('Холодні дзвінки (укр.)',[
+     {t:'11 кроків до холодних дзвінків — як не боятися дзвонити',u:'https://www.youtube.com/watch?v=bk4mM0Ce0Lg'},
+     {t:'Холодні дзвінки: як із виклику зробити можливість',u:'https://www.youtube.com/watch?v=oV3uoS6QVd4'}
+   ])+
+   acadCard('Маркетинг і продажі (укр.)',[
+     {t:'Let’s Start Marketing — канал про маркетинг і продажі',u:'https://www.youtube.com/@LetsStartMarketing'}
+   ])+
+ '</div>';
+
+ h+='<div class="sect">🧠 Психологія та стійкість</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;max-width:900px;margin-bottom:8px">'+
+   acadCard('Вигорання й стійкість (укр.)',[
+     {t:'Поради психолога: Професійне вигорання',u:'https://m.youtube.com/watch?v=acukA3FFzMo'},
+     {t:'МОТИВАЦІЯ Ukraine — канал для тих, хто не здається',u:'https://www.youtube.com/@motivation_Ukraine/videos'}
+   ])+
+   acadCard('🌙 Мотивація на вечір',[
+     {t:'5 хвилин, які змінять твоє життя (укр.)',u:'https://www.youtube.com/watch?v=MgtZH9LhOwI'},
+     {t:'15 минут сильнейшей мотивации для жизни и успеха (рос.)',u:'https://www.youtube.com/watch?v=iWIBwP_mTjY'}
+   ])+
+ '</div>';
+
+ h+='<div class="sect">📱 Особистий бренд</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;max-width:900px">'+
+   acadCard('Почати блог / канал',[
+     {t:'Як почати YouTube канал з нуля (укр., покроково)',u:'https://www.youtube.com/watch?v=79M8MCsFZlQ'},
+     {t:'Как начать вести блог в Instagram: гайд від А до Я (рос.)',u:'https://mysina.ru/kak-vesti-blog-v-instagram/'}
+   ])+
  '</div>';
  $('content').innerHTML=h;
 }
@@ -934,7 +969,7 @@ $('cmNext').addEventListener('click',()=>callGo(1));
 
 /* ---------- ROUTER ---------- */
 let view='dashboard';
-const META={dashboard:{t:'📊 Дашборд',s:'Огляд воронки, доходу та черги дій.',c:'Дашборд',tb:false},today:{t:'🔥 Сьогодні',s:'Черга дій: задачі та ліди на сьогодні.',c:'Сьогодні',tb:true},tasks:{t:'✅ Задачі',s:'Спільна дошка задач. Тягни між колонками, признач людині.',c:'Задачі',tb:false},table:{t:'📋 Усі ліди',s:'База лідів. Клік по рядку — відкрити картку.',c:'Усі ліди',tb:true},board:{t:'🗂️ Дошка лідів',s:'Тягни картки між етапами воронки.',c:'Дошка',tb:true},team:{t:'👥 Команда',s:'Учасники, призначення та статистика.',c:'Команда',tb:false}};
+const META={dashboard:{t:'📊 Дашборд',s:'Огляд воронки, доходу та черги дій.',c:'Дашборд',tb:false},today:{t:'🔥 Сьогодні',s:'Черга дій: задачі та ліди на сьогодні.',c:'Сьогодні',tb:true},tasks:{t:'✅ Задачі',s:'Спільна дошка задач. Тягни між колонками, признач людині.',c:'Задачі',tb:false},table:{t:'📋 Усі ліди',s:'База лідів. Клік по рядку — відкрити картку.',c:'Усі ліди',tb:true},board:{t:'🗂️ Дошка лідів',s:'Тягни картки між етапами воронки.',c:'Дошка',tb:true},team:{t:'👥 Команда',s:'Учасники, призначення та статистика.',c:'Команда',tb:false},academy:{t:'🎓 Академія',s:'Навчання, натхнення й мотивація — заходь сюди не тільки по роботі.',c:'Академія',tb:false}};
 function setView(v){
  view=v;
  document.querySelectorAll('.side .nav[data-view]').forEach(n=>n.classList.toggle('on',n.dataset.view===v&&!(v==='table'&&stageFilter)));
@@ -947,6 +982,7 @@ function rerender(){
  if(view==='dashboard'){viewDashboard();$('count').textContent='';return;}
  if(view==='tasks'){viewTasks();$('count').textContent='';return;}
  if(view==='team'){viewTeam();$('count').textContent='';return;}
+ if(view==='academy'){viewAcademy();$('count').textContent='';return;}
  const r=filtered();$('count').textContent=r.length+' із '+DATA.length;
  if(view==='today')viewToday();else if(view==='table')viewTable(r);else if(view==='board')viewBoard(r);
 }
