@@ -162,6 +162,17 @@ textarea.note{width:100%;min-height:54px;border:1px solid var(--line2);border-ra
 #tmodal,#lmodal{position:fixed;inset:0;background:rgba(15,15,15,.4);display:none;align-items:center;justify-content:center;z-index:120;padding:20px}
 #tmodal.show,#lmodal.show{display:flex}
 #lmodal .tbox{max-height:90vh;overflow-y:auto}
+#callMode{position:fixed;inset:0;background:var(--bg);z-index:150;display:none;flex-direction:column}
+#callMode.show{display:flex}
+.cmhead{display:flex;align-items:center;gap:10px;padding:12px 20px;border-bottom:1px solid var(--line)}
+.cmbody{flex:1;overflow-y:auto;padding:24px;display:flex;justify-content:center}
+.cmcard{width:min(640px,100%)}
+.cmcard h2{margin:0 0 4px;font-size:22px}
+.cmcard .cmmeta{color:var(--txt3);font-size:13px;margin-bottom:14px}
+.cmcard .qacts{margin-bottom:16px}
+.cmcard .block{margin-top:14px}
+.cmbig{font-size:15px;line-height:1.6}
+.cmlog{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
 .tbox{background:var(--bg);border-radius:12px;padding:18px 20px;width:min(460px,96vw);box-shadow:0 12px 40px rgba(15,15,15,.2)}
 .tbox h3{margin:0 0 12px}
 .tbox .fld{margin-bottom:10px}
@@ -243,7 +254,8 @@ textarea.note{width:100%;min-height:54px;border:1px solid var(--line2);border-ra
        </select>
        <label class="chkbox"><input type="checkbox" id="onlyMine">тільки мої</label>
        <span class="count" id="count"></span>
-       <button class="btn pri sm" id="newLeadBtn" style="margin-left:auto">＋ Лід</button>
+       <button class="btn sm" id="callModeBtn" style="margin-left:auto">📞 Режим дзвінків</button>
+       <button class="btn pri sm" id="newLeadBtn">＋ Лід</button>
      </div>
    </div>
    <div class="content" id="content"></div>
@@ -264,6 +276,7 @@ textarea.note{width:100%;min-height:54px;border:1px solid var(--line2);border-ra
   <div class="fld"><label>Назва бізнесу*</label><input id="lName" placeholder="напр. Стоматологія Посмішка"></div>
   <div class="fld"><label>Місто</label><input id="lCity" placeholder="напр. Львів"></div>
   <div class="fld"><label>Телефон</label><input id="lPhone" placeholder="+380..."></div>
+  <div id="lDupWarn" class="fld" style="display:none;background:var(--redbg);color:var(--red);border-radius:7px;padding:8px 10px;font-size:12.5px"></div>
   <div class="fld"><label>Ніша</label><input id="lNiche" list="nicheList" placeholder="напр. Стоматологія"></div>
   <div class="fld"><label>Регіон</label><input id="lRegion" list="regionList" placeholder="напр. Захід"></div>
   <div class="fld"><label>Сайт</label><select id="lSite"><option>Немає</option><option>Лише Instagram</option><option>Слабкий сайт</option></select></div>
@@ -274,6 +287,16 @@ textarea.note{width:100%;min-height:54px;border:1px solid var(--line2);border-ra
   <datalist id="regionList"></datalist>
   <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px"><button class="btn" id="lCancel">Скасувати</button><button class="btn pri" id="lSave">Додати ліда</button></div>
 </div></div>
+<div id="callMode">
+ <div class="cmhead">
+   <button class="btn sm" id="cmClose">✕ Закрити</button>
+   <span id="cmProgress" class="mut"></span>
+   <span style="flex:1"></span>
+   <button class="btn sm" id="cmPrev">← Попередній</button>
+   <button class="btn pri sm" id="cmNext">Наступний →</button>
+ </div>
+ <div class="cmbody" id="cmBody"></div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -675,17 +698,38 @@ $('tSave').addEventListener('click',()=>{
 });
 
 /* ---------- LEAD MODAL ---------- */
+function normName(s){return (s||'').toLowerCase().replace(/[«»"'.,]/g,'').replace(/\s+/g,' ').trim();}
+function findDuplicate(name,city,phone){
+ const p=digits(phone);
+ return DATA.find(d=>{
+   if(p&&digits(d.phone)===p)return true;
+   const n=normName(name);
+   return n&&n===normName(d.name)&&normName(city)===normName(d.city);
+ });
+}
+function checkDupWarn(){
+ const dup=findDuplicate($('lName').value,$('lCity').value,$('lPhone').value);
+ const el=$('lDupWarn');
+ if(dup){el.style.display='';el.textContent='⚠️ Схожий лід уже є в базі: «'+dup.name+'», '+(dup.city||'—')+(dup.phone?', '+dup.phone:'')+'.';}
+ else el.style.display='none';
+ return dup;
+}
 function openLeadModal(){
  ['lName','lCity','lPhone','lNiche','lRegion','lRev','lDetails','lPrompt'].forEach(id=>$(id).value='');
- $('lSite').value='Немає';
+ $('lSite').value='Немає';$('lDupWarn').style.display='none';
  $('nicheList').innerHTML=[...new Set(DATA.map(d=>d.niche).filter(Boolean))].map(v=>'<option value="'+esc(v)+'">').join('');
  $('regionList').innerHTML=[...new Set(DATA.map(d=>d.region).filter(Boolean))].map(v=>'<option value="'+esc(v)+'">').join('');
  $('lmodal').classList.add('show');$('lName').focus();
 }
+$('lName').addEventListener('input',checkDupWarn);
+$('lPhone').addEventListener('input',checkDupWarn);
+$('lCity').addEventListener('input',checkDupWarn);
 $('lCancel').addEventListener('click',()=>$('lmodal').classList.remove('show'));
 $('lmodal').addEventListener('click',e=>{if(e.target.id==='lmodal')$('lmodal').classList.remove('show');});
 $('lSave').addEventListener('click',async()=>{
  const name=$('lName').value.trim();if(!name){toast('Впиши назву бізнесу');return;}
+ const dup=checkDupWarn();
+ if(dup&&!confirm('Схожий лід уже є: «'+dup.name+'», '+(dup.city||'—')+'. Додати все одно як окремий лід?'))return;
  const lead={id:uuid(),name,city:$('lCity').value.trim()||null,phone:$('lPhone').value.trim()||null,niche:$('lNiche').value.trim()||null,region:$('lRegion').value.trim()||null,site:$('lSite').value,rev:$('lRev').value?Number($('lRev').value):null,details:$('lDetails').value.trim()||null,prompt:$('lPrompt').value.trim()||null};
  $('lSave').disabled=true;
  await Backend.createLead(lead);
@@ -693,6 +737,43 @@ $('lSave').addEventListener('click',async()=>{
  $('lSave').disabled=false;$('lmodal').classList.remove('show');toast('Ліда додано');rerenderAll();
 });
 $('newLeadBtn').addEventListener('click',openLeadModal);
+
+/* ---------- CALL MODE ---------- */
+let callQueue=[],callIdx=0;
+function startCallMode(){
+ callQueue=filtered();
+ if(!callQueue.length){toast('Немає лідів під поточні фільтри');return;}
+ callIdx=0;renderCallMode();$('callMode').classList.add('show');
+}
+function closeCallMode(){$('callMode').classList.remove('show');rerender();}
+function callGo(delta){
+ const n=callIdx+delta;
+ if(n<0)return;
+ if(n>=callQueue.length){toast('Це був останній лід у черзі 🎉');closeCallMode();return;}
+ callIdx=n;renderCallMode();
+}
+function renderCallMode(){
+ const d=callQueue[callIdx],rc=rec(d),tel=digits(d.phone),wa=tel.replace('+','');
+ $('cmProgress').textContent=(callIdx+1)+' з '+callQueue.length;
+ const stgBtns=STAGES.map(s=>'<button data-stage="'+s.k+'" class="'+(rc.stage===s.k?'on':'')+'" style="'+(rc.stage===s.k?'background:'+s.bg+';color:'+s.c:'')+'"><span class="stagedot" style="background:'+s.c+'"></span>'+s.t+'</button>').join('');
+ $('cmBody').innerHTML='<div class="cmcard">'+
+   '<h2>'+esc(d.name)+'</h2>'+
+   '<div class="cmmeta">'+esc(d.region||'')+' · '+esc(d.city||'')+' · '+esc(d.niche||'')+' · '+(d.rev||'—')+' відгуків · Сайт: '+esc(d.site||'—')+'</div>'+
+   '<div class="qacts"><a class="btn call" href="tel:'+tel+'">📞 '+esc(d.phone||'—')+'</a><a class="btn v" href="viber://chat?number='+encodeURIComponent(tel)+'">Viber</a><a class="btn w" href="https://wa.me/'+wa+'" target="_blank" rel="noopener">WhatsApp</a><a class="btn g" href="'+gmaps(d)+'" target="_blank" rel="noopener">Maps</a></div>'+
+   '<div class="stgpick" data-stg>'+stgBtns+'</div>'+
+   '<div class="block"><h4>Скрипт першого контакту <button class="btn sm" data-copy style="float:right">Копіювати</button></h4><div class="body cmbig">'+esc(scriptTxt(d))+'</div></div>'+
+   '<div class="block"><h4>Деталі бізнесу</h4><div class="body">'+esc(d.details||'—')+'</div></div>'+
+   '<div class="cmlog"><button class="btn sm" data-log="Подзвонив">☎ Подзвонив</button><button class="btn sm" data-log="Не відповіли">✖ Не відповіли</button><button class="btn sm" data-log="Скинув чернетку">📤 Чернетка</button><button class="btn sm" data-log="Зацікавився">👍 Інтерес</button></div>'+
+ '</div>';
+ const root=$('cmBody');
+ root.querySelector('[data-stg]').addEventListener('click',e=>{const b=e.target.closest('button[data-stage]');if(!b)return;rc.stage=b.dataset.stage;saveLead(d._id);renderCallMode();renderSidebar();});
+ root.querySelector('[data-copy]').addEventListener('click',()=>copy(scriptTxt(d),'Скопійовано'));
+ root.querySelectorAll('[data-log]').forEach(b=>b.addEventListener('click',()=>{addNote(d,b.dataset.log,true);renderSidebar();callGo(1);}));
+}
+$('callModeBtn').addEventListener('click',startCallMode);
+$('cmClose').addEventListener('click',closeCallMode);
+$('cmPrev').addEventListener('click',()=>callGo(-1));
+$('cmNext').addEventListener('click',()=>callGo(1));
 
 /* ---------- ROUTER ---------- */
 let view='dashboard';
@@ -745,7 +826,7 @@ $('content').addEventListener('drop',e=>{const col=e.target.closest('.col');docu
 $('content').addEventListener('dragend',()=>document.querySelectorAll('.col').forEach(c=>c.classList.remove('dragover')));
 /* panel + misc */
 $('pClose').addEventListener('click',closePanel);$('ovl').addEventListener('click',closePanel);
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePanel();$('tmodal').classList.remove('show');$('lmodal').classList.remove('show');}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePanel();$('tmodal').classList.remove('show');$('lmodal').classList.remove('show');if($('callMode').classList.contains('show'))closeCallMode();}});
 $('menuBtn').addEventListener('click',()=>$('side').classList.toggle('open'));
 [q,regionSel,citySel,nicheSel,assigneeSel,sortSel].forEach(el=>el.addEventListener('input',rerender));
 onlyMine.addEventListener('change',rerender);
