@@ -180,9 +180,15 @@ textarea.note{width:100%;min-height:54px;border:1px solid var(--line2);border-ra
 .subtask.done .st-title{text-decoration:line-through;color:var(--txt3)}
 .subtask .st-title{flex:1}
 /* modal (new task) */
-#tmodal,#lmodal{position:fixed;inset:0;background:rgba(15,15,25,.42);display:none;align-items:center;justify-content:center;z-index:120;padding:20px;backdrop-filter:blur(1px)}
-#tmodal.show,#lmodal.show{display:flex}
+#tmodal,#lmodal,#quizModal{position:fixed;inset:0;background:rgba(15,15,25,.42);display:none;align-items:center;justify-content:center;z-index:120;padding:20px;backdrop-filter:blur(1px)}
+#tmodal.show,#lmodal.show,#quizModal.show{display:flex}
 #lmodal .tbox{max-height:90vh;overflow-y:auto}
+.qz-q{margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.qz-q:last-child{border-bottom:0}
+.qz-q p{font-weight:600;margin:0 0 8px;font-size:13.5px}
+.qz-opt{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13.5px;cursor:pointer}
+.qz-opt.right{color:var(--green);font-weight:600}
+.qz-opt.wrong{color:var(--red);text-decoration:line-through}
 #callMode{position:fixed;inset:0;background:var(--bg);z-index:150;display:none;flex-direction:column}
 #callMode.show{display:flex}
 .cmhead{display:flex;align-items:center;gap:10px;padding:14px 22px;border-bottom:1px solid var(--line);background:var(--bg)}
@@ -322,6 +328,11 @@ textarea.note{width:100%;min-height:54px;border:1px solid var(--line2);border-ra
  </div>
  <div class="cmbody" id="cmBody"></div>
 </div>
+<div id="quizModal"><div class="tbox" style="width:min(560px,96vw);max-height:90vh;overflow-y:auto">
+  <h3 id="quizTitle">Тест</h3>
+  <div id="quizBody"></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px"><button class="btn" id="quizCancel">Закрити</button><button class="btn pri" id="quizSubmit">Перевірити</button></div>
+</div></div>
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -376,6 +387,100 @@ function dailyQuote(){
  const d=new Date();
  const day=Math.floor((d-new Date(d.getFullYear(),0,0))/86400000);
  return QUOTES[day%QUOTES.length];
+}
+const ACADEMY_STAGES=[
+ {n:1,title:'Етап 1 — Шлях новачка',steps:[
+   {id:'e1s1',t:'Відкрий будь-якого ліда в «Усі ліди» й прочитай «Скрипт першого контакту» та «Промт для генерації сайту» в його картці',u:null},
+   {id:'e1s2',t:'Claude Code Tutorial for Beginners — згенеруй свій перший чорновий сайт за промтом із картки ліда',u:'https://www.youtube.com/watch?v=OdSXY4YgmZA'},
+   {id:'e1s3',t:'Постав собі особисту грошову ціль у «🎯 Моя ціль» на дашборді',u:null},
+   {id:'e1s4',t:'11 кроків до холодних дзвінків — як не боятися дзвонити',u:'https://www.youtube.com/watch?v=bk4mM0Ce0Lg'},
+   {id:'e1s5',t:'Зроби перші 10 дзвінків через «📞 Режим дзвінків»',u:null},
+   {id:'e1s6',t:'Психологічний тайм-менеджмент: як встигати НЕ все',u:'https://www.youtube.com/watch?v=UnFKcz5TWXA'},
+   {id:'e1s7',t:'Прочитай лекцію нижче «Як писати промт на сайт за $900+» і застосуй її на своєму наступному промті',u:null}
+ ],quiz:[
+   {q:'Яка стадія у воронці йде одразу після «Новий»?',opts:['Готую чернетку','Показ клієнту','💰 Угода','❌ Відмова'],correct:0},
+   {q:'Що робить кнопка «📞 Режим дзвінків»?',opts:['Видаляє ліда з бази','Відкриває чергу лідів по черзі — дзвониш і йдеш далі','Генерує сайт автоматично','Відправляє email клієнту'],correct:1},
+   {q:'Скільки разів варто застосувати нову фразу закриття на практиці, щоб вона стала навичкою (за матеріалами)?',opts:['1 раз','3 рази','21 раз','100 разів'],correct:2},
+   {q:'Що варто зробити одразу, якщо клієнт під час дзвінка виявив інтерес?',opts:['Нічого, він сам передзвонить','Натиснути «👍 Інтерес» і запланувати наступну дію','Видалити ліда','Одразу закрити угоду без чернетки'],correct:1},
+   {q:'Що радше зробить сайт схожим на дешевий шаблон, а не на проєкт за $900+?',opts:['Конкретні цифри довіри («335 відгуків»)','Один чіткий CTA на весь сайт','Розпливчасті фрази на кшталт «багато задоволених клієнтів»','Явно вказаний стиль і мова в промті'],correct:2}
+ ]},
+ {n:2,title:'Етап 2 — Від новачка до спеціаліста',steps:[
+   {id:'e2s1',t:'Build Stunning Websites With Claude Code (5 prompts) — просунуті промти',u:'https://www.youtube.com/watch?v=qHm-WbpvZeg'},
+   {id:'e2s2',t:'Холодні дзвінки: як із виклику зробити можливість',u:'https://www.youtube.com/watch?v=oV3uoS6QVd4'},
+   {id:'e2s3',t:'6 технік роботи із запереченнями клієнтів (стаття з прикладами)',u:'https://nethunt.ua/blog/6-tiekhnik-roboti-iz-zapieriechienniami-kliientiv-na-prikladakh/'},
+   {id:'e2s4',t:'Як закривати угоди? Основні техніки з прикладами',u:'https://keepincrm.com/7-methods-of-closing-deals'},
+   {id:'e2s5',t:'Як писати тексти, які продають — формули AIDA, PAS, FAB',u:'https://www.devyatka.com.ua/kopirajtyng/formula-prodayuchogo-tekstu-aida-fab-pas/'},
+   {id:'e2s6',t:'Додай першого ліда, якого сам знайшов, через «+ Лід»',u:null},
+   {id:'e2s7',t:'Закрий свою першу угоду 💰 — заповни суму й переведи лід в «Угода»',u:null}
+ ],quiz:[
+   {q:'Яка формула НЕ використовується для написання продаючого тексту?',opts:['AIDA','PAS','SWOT','FAB'],correct:2},
+   {q:'Перед тим як заперечити клієнту напряму, що варто зробити спочатку?',opts:['Одразу класти слухавку','Вислухати й уточнити суть заперечення','Ігнорувати сказане','Змінити тему розмови'],correct:1},
+   {q:'Де в цьому просторі реєструється сума закритої угоди?',opts:['У Задачах','У картці ліда, поле «Сума угоди»','У Команді','У налаштуваннях профілю'],correct:1},
+   {q:'Що є ознакою готовності клієнта до закриття угоди?',opts:['Запитує про доставку, гарантії, терміни','Мовчить увесь дзвінок','Одразу кидає слухавку','Просить не передзвонювати'],correct:0}
+ ]},
+ {n:3,title:'Етап 3 — Масштабування',steps:[
+   {id:'e3s1',t:'Ідеальний сайт на Claude Code за 20 хвилин (для новачків) — швидші, якісніші чернетки',u:'https://www.youtube.com/watch?v=HsCygsPDBwA'},
+   {id:'e3s2',t:'Поради психолога: Професійне вигорання',u:'https://m.youtube.com/watch?v=acukA3FFzMo'},
+   {id:'e3s3',t:'Фінансова грамотність та інвестиції для новачків — безкоштовний курс Prometheus',u:'https://prometheus.org.ua/prometheus-free/financial-literacy-and-investments-for-beginners/'},
+   {id:'e3s4',t:'Як почати YouTube канал з нуля (покроково)',u:'https://www.youtube.com/watch?v=79M8MCsFZlQ'},
+   {id:'e3s5',t:'Как начать вести блог в Instagram: гайд від А до Я',u:'https://mysina.ru/kak-vesti-blog-v-instagram/'},
+   {id:'e3s6',t:'Постав собі нову, більшу ціль на наступний місяць у «🎯 Моя ціль»',u:null}
+ ],quiz:null}
+];
+const PROMPT_LECTURE='Кожен промт у картці ліда — це технічне завдання для AI. Що конкретніше — то якісніший результат. Ось структура, яка вже працює (подивись будь-який промт у «Усі ліди» як приклад):\n\n'+
+'1. ПЕРШИЙ ЕКРАН (hero) — не «ласкаво просимо», а конкретний оффер: назва + головна перевага в одному реченні + кнопка дії. Приклад: «Slivko Dental — стоматологія в Умані, якій довіряють понад 335 пацієнтів» + «Записатися».\n\n'+
+'2. СЕКЦІЇ ПО ПОСЛУГАХ — не просто список, а з акцентом на те, що продає найкраще: винеси окремо сильну сторону бізнесу (спеціалізацію, авторитетного фахівця, конкретні кейси).\n\n'+
+'3. БЛОК ДОВІРИ — рейтинг, кількість відгуків, фото робіт «до/після» якщо є. Конкретні цифри, а не «багато клієнтів»: «335 пацієнтів», «4.8★».\n\n'+
+'4. КОНТАКТИ + CTA — телефон, кнопка Instagram/соцмереж, карта, sticky-кнопка запису, щоб завжди була на екрані.\n\n'+
+'5. СТИЛЬ — пиши прямо в промті: «сучасний преміальний» або «чистий довірливий, білі/бірюзові тони». AI без цього робить типовий шаблон.\n\n'+
+'6. МОВА — завжди вказуй явно («українська»), інакше AI може змішати мови.\n\n'+
+'ЩО РОБИТЬ САЙТ СХОЖИМ НА $900, А НЕ НА $50:\n— реальні деталі бізнесу в промті, а не загальні фрази;\n— один чіткий CTA на весь сайт, а не пʼять різних кнопок;\n— цифри довіри в тексті, а не «багато задоволених клієнтів»;\n— явно попроси «адаптивний, mobile-first» — половина клієнтів дивитиметься з телефону.\n\n'+
+'Після генерації — переходь у «Показ клієнту» й дзвони за вбудованим «Скриптом першого контакту», спираючись на «Чому це тепла заявка» в картці ліда. Це і є весь цикл: тепла заявка → якісний промт → показ → правки → передача → угода.';
+const OWNER_TRACK={steps:[
+ {id:'ownr1',t:'Мотивація відділу продажу — як отримувати максимум результату від команди',u:'https://nethunt.ua/blog/motyvatsiya-viddilu-prodazhiv/'},
+ {id:'ownr2',t:'Курс «Директор з продажу»: як побудувати систему, що стабільно виконує план (Laba)',u:'https://laba.ua/lecture/377-direktor-po-prodazham-course'},
+ {id:'ownr3',t:'МОТИВАЦІЯ Ukraine — канал для тих, хто не здається (корисно ще й транслювати команді)',u:'https://www.youtube.com/@motivation_Ukraine/videos'},
+ {id:'ownr4',t:'Психологічний тайм-менеджмент: як встигати НЕ все — коли задач у рази більше, ніж у команди',u:'https://www.youtube.com/watch?v=UnFKcz5TWXA'},
+ {id:'ownr5',t:'Фінансова грамотність та інвестиції — Prometheus (масштабувати особистий дохід, не тільки командний)',u:'https://prometheus.org.ua/prometheus-free/financial-literacy-and-investments-for-beginners/'}
+]};
+function toggleAcademyStep(id){
+ const m=member(me);if(!m)return;
+ const done=new Set(m.academy_done||[]);
+ if(done.has(id))done.delete(id);else done.add(id);
+ m.academy_done=[...done];
+ Backend.saveMember(m);
+ rerender();
+}
+function academyStage(){return (member(me)||{}).academy_stage||1;}
+let quizStage=null,quizAnswers=[];
+function openQuiz(stageNum){
+ const st=ACADEMY_STAGES.find(s=>s.n===stageNum);if(!st||!st.quiz)return;
+ quizStage=stageNum;quizAnswers=new Array(st.quiz.length).fill(null);
+ $('quizTitle').textContent='Тест до «'+st.title+'»';
+ renderQuiz(st,false);
+ $('quizModal').classList.add('show');
+}
+function renderQuiz(st,showResult){
+ $('quizBody').innerHTML=st.quiz.map((q,qi)=>'<div class="qz-q"><p>'+(qi+1)+'. '+esc(q.q)+'</p>'+
+   q.opts.map((o,oi)=>{
+     let cls='qz-opt';
+     if(showResult){if(oi===q.correct)cls+=' right';else if(quizAnswers[qi]===oi)cls+=' wrong';}
+     return '<label class="'+cls+'"><input type="radio" name="qz'+qi+'" data-qz="'+qi+'" data-oi="'+oi+'"'+(quizAnswers[qi]===oi?' checked':'')+(showResult?' disabled':'')+'> '+esc(o)+'</label>';
+   }).join('')+
+ '</div>').join('');
+ if(showResult){
+   const correctCount=st.quiz.filter((q,qi)=>quizAnswers[qi]===q.correct).length;
+   const pass=correctCount>=Math.ceil(st.quiz.length*0.7);
+   $('quizBody').innerHTML+='<div class="block" style="background:'+(pass?'var(--greenbg)':'var(--redbg)')+';border-color:transparent"><b>'+correctCount+' з '+st.quiz.length+' правильно.</b> '+(pass?'Тест складено 🎉 Наступний етап відкрито.':'Потрібно щонайменше '+Math.ceil(st.quiz.length*0.7)+' правильних. Спробуй ще раз.')+'</div>';
+   $('quizSubmit').textContent=pass?'Готово':'Спробувати ще раз';
+   $('quizSubmit').dataset.mode=pass?'close':'retry';
+   if(pass){
+     const m=member(me);if(m){m.academy_stage=Math.max(m.academy_stage||1,quizStage+1);Backend.saveMember(m);}
+   }
+ }else{
+   $('quizSubmit').textContent='Перевірити';
+   $('quizSubmit').dataset.mode='check';
+ }
 }
 
 /* ---------- STATE ---------- */
@@ -632,6 +737,47 @@ function acadCard(title,links){
 function viewAcademy(){
  let h='<div class="hero"><div class="htxt"><h2>🎓 Внутрішня академія</h2><p>Заходь сюди не тільки по роботі: розвивай смак у дизайні, вчись новому, підзаряджайся мотивацією — коли є хвилина чи немає дзвінків.</p></div></div>';
  h+='<div class="mut" style="font-size:13px;font-style:italic;margin:-14px 0 22px;padding:0 2px">💬 '+esc(dailyQuote())+'</div>';
+
+ const doneSet=new Set((member(me)||{}).academy_done||[]);
+ const myStage=academyStage();
+ const allSteps=ACADEMY_STAGES.flatMap(s=>s.steps);
+ const doneCount=allSteps.filter(s=>doneSet.has(s.id)).length;
+ const pathPct=Math.round(doneCount/allSteps.length*100);
+ h+='<div class="sect">🚀 Внутрішній курс — 3 етапи до самостійності</div>';
+ h+='<div class="block" style="max-width:680px;margin-bottom:8px">'+
+   '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:7px"><b>'+doneCount+' з '+allSteps.length+' кроків · Етап '+myStage+' з 3</b><span class="mut">'+pathPct+'%</span></div>'+
+   '<div style="height:10px;background:var(--side);border-radius:6px;overflow:hidden"><div style="height:100%;width:'+pathPct+'%;background:linear-gradient(90deg,#4f46e5,#0f8a5f);border-radius:6px;transition:width .3s"></div></div>'+
+ '</div>';
+ h+=ACADEMY_STAGES.map(st=>{
+   const locked=st.n>myStage;
+   const current=st.n===myStage;
+   const passed=st.n<myStage;
+   let card='<div class="block" style="max-width:900px;margin-bottom:8px'+(locked?';opacity:.55':'')+'"><h4>'+esc(st.title)+(passed?' · ✅ пройдено':locked?' · 🔒 закрито':'')+'</h4>';
+   if(locked){
+     card+='<div class="mut" style="font-size:13px">Спочатку склади тест Етапу '+(st.n-1)+', щоб відкрити цей розділ.</div></div>';
+     return card;
+   }
+   card+=st.steps.map(s=>{
+     const on=doneSet.has(s.id);
+     const label=s.u?'<a href="'+s.u+'" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">'+esc(s.t)+'</a>':esc(s.t);
+     return '<label style="display:flex;align-items:flex-start;gap:9px;padding:5px 0;cursor:pointer;font-size:13.5px;line-height:1.5"><input type="checkbox" data-acad="'+s.id+'"'+(on?' checked':'')+' style="margin-top:3px;flex:0 0 auto"><span style="'+(on?'text-decoration:line-through;color:var(--txt3)':'')+'">'+label+'</span></label>';
+   }).join('');
+   if(st.n===1)card+='<div class="body" style="white-space:pre-wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)"><b>📝 Як писати промт на сайт за $900+</b><br><br>'+esc(PROMPT_LECTURE)+'</div>';
+   if(st.quiz&&current)card+='<div style="margin-top:12px"><button class="btn pri sm" data-openquiz="'+st.n+'">📝 Пройти тест і відкрити Етап '+(st.n+1)+'</button></div>';
+   if(st.quiz&&passed)card+='<div class="mut" style="font-size:12.5px;margin-top:10px">Тест складено ✅</div>';
+   card+='</div>';
+   return card;
+ }).join('');
+
+ if((member(me)||{}).is_owner){
+   h+='<div class="sect">🧭 Керівництво командою (тільки для вас)</div><div class="block" style="max-width:900px;margin-bottom:8px"><div class="mut" style="font-size:12.5px;margin-bottom:8px">Ви керуєте, але теж розвиваєтесь — щоб з часом менше бути залученим у роботу кожного і більше в систему.</div>'+
+     OWNER_TRACK.steps.map(s=>{
+       const on=doneSet.has(s.id);
+       const label=s.u?'<a href="'+s.u+'" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">'+esc(s.t)+'</a>':esc(s.t);
+       return '<label style="display:flex;align-items:flex-start;gap:9px;padding:5px 0;cursor:pointer;font-size:13.5px;line-height:1.5"><input type="checkbox" data-acad="'+s.id+'"'+(on?' checked':'')+' style="margin-top:3px;flex:0 0 auto"><span style="'+(on?'text-decoration:line-through;color:var(--txt3)':'')+'">'+label+'</span></label>';
+     }).join('')+
+   '</div>';
+ }
 
  h+='<div class="sect">🖥️ Робити сайти через AI</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;max-width:900px;margin-bottom:8px">'+
    acadCard('Claude Code (англ.)',[
@@ -918,6 +1064,27 @@ $('lSave').addEventListener('click',async()=>{
 });
 $('newLeadBtn').addEventListener('click',openLeadModal);
 
+/* ---------- QUIZ MODAL ---------- */
+$('quizCancel').addEventListener('click',()=>$('quizModal').classList.remove('show'));
+$('quizModal').addEventListener('click',e=>{if(e.target.id==='quizModal')$('quizModal').classList.remove('show');});
+$('quizBody').addEventListener('change',e=>{
+ const inp=e.target.closest('[data-qz]');if(!inp)return;
+ quizAnswers[+inp.dataset.qz]=+inp.dataset.oi;
+});
+$('quizSubmit').addEventListener('click',()=>{
+ const st=ACADEMY_STAGES.find(s=>s.n===quizStage);if(!st)return;
+ const mode=$('quizSubmit').dataset.mode;
+ if(mode==='check'){
+   if(quizAnswers.some(a=>a==null)){toast('Дай відповідь на всі питання');return;}
+   renderQuiz(st,true);
+ }else if(mode==='retry'){
+   quizAnswers=new Array(st.quiz.length).fill(null);
+   renderQuiz(st,false);
+ }else{
+   $('quizModal').classList.remove('show');rerender();
+ }
+});
+
 /* ---------- CALL MODE ---------- */
 let callQueue=[],callIdx=0;
 function priorityQueue(){
@@ -1008,6 +1175,8 @@ $('content').addEventListener('click',e=>{
  }
  const gs=e.target.closest('[data-goStage]');if(gs){stageFilter=gs.dataset.goStage;setView('table');return;}
  const td=e.target.closest('[data-tdone]');if(td){const x=state.tasks.find(t=>t.id===td.dataset.tdone);if(x){x.status=td.checked?'done':'todo';Backend.saveTask(x);renderSidebar();rerender();}return;}
+ const ac=e.target.closest('[data-acad]');if(ac){toggleAcademyStep(ac.dataset.acad);return;}
+ const oq=e.target.closest('[data-openquiz]');if(oq){openQuiz(+oq.dataset.openquiz);return;}
  const dt=e.target.closest('[data-deltask]');if(dt){const id=dt.dataset.deltask;state.tasks=state.tasks.filter(t=>t.id!==id);Backend.delTask(id);renderSidebar();rerender();return;}
  const am=e.target.closest('#addMemberBtn');if(am){const inp=$('newMemberName');if(inp.value.trim()){const mm={id:uuid(),name:inp.value.trim(),color:PALETTE[state.members.length%PALETTE.length],pin:''};state.members.push(mm);Backend.saveMember(mm);renderMe();rerenderAll();toast('Учасника додано');}return;}
  const dm=e.target.closest('[data-delmember]');if(dm){if(confirm('Видалити учасника? Його ліди/задачі лишаться, але без виконавця.')){const id=dm.dataset.delmember;state.members=state.members.filter(m=>m.id!==id);Backend.delMember(id);if(me===id){me='';localStorage.removeItem('crm_me');}renderMe();rerenderAll();}return;}
