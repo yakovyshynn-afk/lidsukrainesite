@@ -621,7 +621,20 @@ function viewDashboard(){
  const queue=DATA.filter(d=>{const r=rec(d);return r.next&&r.next<=t&&r.stage!=='won'&&r.stage!=='lost';}).sort((a,b)=>rec(a).next.localeCompare(rec(b).next));
  h+='<div class="sect">Черга на сьогодні '+(queue.length?'<span class="tag">'+queue.length+'</span>':'')+'</div>';
  h+=queue.length?('<div class="queue">'+queue.slice(0,6).map(qcardHTML).join('')+'</div>'+(queue.length>6?'<div style="margin-top:10px"><button class="btn sm" data-goView="today">Показати всі →</button></div>':'')):'<div class="empty">Немає дій на сьогодні. Признач дедлайни лідам. 🎯</div>';
- h+='<div class="sect">📚 Навчання</div><div class="block" style="max-width:520px"><div class="body">Ліди генеруються під конкретний бізнес через промт у картці ліда — вставляєш його в Claude Code, і той збирає чернетку сайту. Офіційні матеріали:</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><a class="btn sm" href="https://claude.com/claude-code" target="_blank" rel="noopener">🌐 Про Claude Code</a><a class="btn sm" href="https://docs.claude.com" target="_blank" rel="noopener">📖 Документація Anthropic</a></div></div>';
+ h+='<div class="sect">📚 Навчання й мотивація</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;max-width:900px">'+
+   '<div class="block"><h4>🖥️ Робити сайти в Claude Code</h4>'+
+     '<a class="body" style="display:block;margin-bottom:6px" href="https://www.youtube.com/watch?v=OdSXY4YgmZA" target="_blank" rel="noopener">▶ Claude Code Tutorial for Beginners: Build Website with AI</a>'+
+     '<a class="body" style="display:block;margin-bottom:6px" href="https://www.youtube.com/watch?v=qHm-WbpvZeg" target="_blank" rel="noopener">▶ Build Stunning Websites With Claude Code (5 prompts)</a>'+
+     '<a class="body" style="display:block" href="https://www.youtube.com/watch?v=fDTwHIKltpc" target="_blank" rel="noopener">▶ The EASY way to build a website with Claude Code</a>'+
+   '</div>'+
+   '<div class="block"><h4>☎️ Холодні дзвінки (укр.)</h4>'+
+     '<a class="body" style="display:block;margin-bottom:6px" href="https://www.youtube.com/watch?v=bk4mM0Ce0Lg" target="_blank" rel="noopener">▶ 11 кроків до холодних дзвінків — як не боятися дзвонити</a>'+
+     '<a class="body" style="display:block" href="https://www.youtube.com/watch?v=oV3uoS6QVd4" target="_blank" rel="noopener">▶ Холодні дзвінки: як із виклику зробити можливість</a>'+
+   '</div>'+
+   '<div class="block"><h4>📈 Маркетинг і продажі (укр.)</h4>'+
+     '<a class="body" style="display:block" href="https://www.youtube.com/@LetsStartMarketing" target="_blank" rel="noopener">▶ Let’s Start Marketing — канал про маркетинг і продажі</a>'+
+   '</div>'+
+ '</div>';
  $('content').innerHTML=h;
 }
 function qcardHTML(d){
