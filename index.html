@@ -84,23 +84,38 @@ input,select,textarea,button{font-family:inherit;font-size:14px;color:var(--txt)
 .cellname{font-weight:500}.cellname:hover{text-decoration:underline}
 .subname{color:var(--txt3);font-size:12px}
 .gopen{color:var(--txt3);font-size:12px;opacity:0;margin-left:6px}.tbl tr:hover .gopen{opacity:1}
+/* hero */
+.hero{background:linear-gradient(135deg,#2383e2 0%,#448361 130%);border-radius:14px;padding:22px 26px;color:#fff;margin-bottom:22px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;box-shadow:0 8px 24px rgba(35,131,226,.18)}
+.hero .htxt{flex:1;min-width:220px}
+.hero h2{margin:0 0 4px;font-size:19px;font-weight:700}
+.hero p{margin:0;opacity:.9;font-size:13px}
+.hero .btn{background:#fff;color:#1f5ea8;border:0;font-weight:700;padding:10px 18px;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.hero .btn:hover{transform:translateY(-1px)}
+/* leaderboard */
+.lb{display:flex;flex-direction:column;gap:6px;max-width:520px;margin-bottom:22px}
+.lbrow{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:9px;padding:8px 12px;background:var(--bg);transition:box-shadow .15s}
+.lbrow:hover{box-shadow:0 2px 10px rgba(15,15,15,.06)}
+.lbrow .lbrank{width:18px;color:var(--txt3);font-size:12px;font-weight:700;text-align:center}
+.lbrow .lbname{flex:1;font-weight:600;font-size:13.5px}
+.lbrow .lbval{font-weight:700;color:var(--green);font-size:13.5px}
 /* metrics/funnel */
 .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px}
-.metric{border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.metric{border:1px solid var(--line);border-radius:12px;padding:14px 16px;transition:box-shadow .15s,transform .15s;background:var(--bg)}
+.metric:hover{box-shadow:0 4px 16px rgba(15,15,15,.08);transform:translateY(-1px)}
 .metric .lbl{color:var(--txt2);font-size:12.5px;margin-bottom:6px}
-.metric .val{font-size:26px;font-weight:700;letter-spacing:-.01em}
+.metric .val{font-size:27px;font-weight:800;letter-spacing:-.015em}
 .metric .val.g{color:var(--green)}.metric .val.r{color:var(--red)}.metric .val.a{color:var(--amber)}.metric .val.b{color:var(--acc)}
-.sect{font-size:15px;font-weight:600;margin:22px 0 12px}
+.sect{font-size:15px;font-weight:700;margin:26px 0 12px;display:flex;align-items:center;gap:8px}
 .funnel{display:flex;flex-direction:column;gap:8px;max-width:660px}
 .frow{display:flex;align-items:center;gap:12px;cursor:pointer}
 .frow .fl{width:130px;font-size:13px;color:var(--txt2);display:flex;align-items:center;gap:7px}
 .frow .ft{flex:1;height:26px;background:var(--hover);border-radius:6px;overflow:hidden}
-.frow .fb{height:100%;border-radius:6px;min-width:2px}
+.frow .fb{height:100%;border-radius:6px;min-width:2px;transition:width .3s}
 .frow .fc{width:140px;text-align:right;font-size:12.5px;color:var(--txt2);white-space:nowrap}.frow .fc b{color:var(--txt)}
 /* queue */
 .queue{display:flex;flex-direction:column;gap:8px;max-width:860px}
-.qcard{border:1px solid var(--line);border-radius:9px;padding:11px 14px;display:flex;align-items:center;gap:14px;cursor:pointer}
-.qcard:hover{background:var(--hover);border-color:var(--line2)}
+.qcard{border:1px solid var(--line);border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:box-shadow .15s}
+.qcard:hover{background:var(--hover);border-color:var(--line2);box-shadow:0 3px 12px rgba(15,15,15,.06)}
 .qcard.over{border-left:3px solid var(--red)}.qcard.today{border-left:3px solid var(--amber)}
 .qcard .qmain{flex:1;min-width:0}.qcard .qn{font-weight:600}.qcard .qmeta{color:var(--txt3);font-size:12.5px}
 .qcard .qact{color:var(--txt2);font-size:13px}
@@ -121,7 +136,8 @@ input,select,textarea,button{font-family:inherit;font-size:14px;color:var(--txt)
 .kcard .ktitle{font-weight:600;line-height:1.3}
 .kcard .klead{color:var(--acc);font-size:12px;margin-top:2px}
 /* team */
-.tcard{border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tcard{border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;transition:box-shadow .15s}
+.tcard:hover{box-shadow:0 3px 14px rgba(15,15,15,.07)}
 .tcard .tstat{text-align:center;min-width:70px}.tcard .tstat b{font-size:18px;display:block}.tcard .tstat span{font-size:11px;color:var(--txt2)}
 .addrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
 /* panel */
@@ -520,8 +536,22 @@ function viewDashboard(){
  const counts={};STAGES.forEach(s=>counts[s.k]=0);all.forEach(r=>counts[r.stage]++);
  const sums={};STAGES.forEach(s=>sums[s.k]=0);DATA.forEach(d=>{const r=rec(d);sums[r.stage]+=(Number(r.amount)||0);});
  const max=Math.max(1,...STAGES.map(s=>counts[s.k]));
+
+ const pq=priorityQueue();
+ const myName=(member(me)||{}).name;
+ let h='<div class="hero"><div class="htxt"><h2>'+(myName?'Привіт, '+esc(myName)+'! 👋':'Привіт! 👋')+'</h2><p>'+(pq.length?'Сьогодні варто обробити '+pq.length+' '+(pq.length===1?'ліда':'лідів')+' — тиснеш і йдеш по черзі, без пошуку по таблиці.':'Черга порожня — усе актуальне вже оброблено. 🎉')+'</p></div>'+
+   (pq.length?'<button class="btn" data-startcall>▶ Почати дзвонити ('+pq.length+')</button>':'')+
+ '</div>';
+
+ const stats=teamStats().filter(s=>s.leads>0||s.income>0);
+ if(stats.length){
+   h+='<div class="sect">🏆 Топ команди</div><div class="lb">'+stats.slice(0,5).map((s,i)=>
+     '<div class="lbrow"><span class="lbrank">'+(i+1)+'</span>'+avatar(s.m.id)+'<span class="lbname">'+esc(s.m.name)+(s.m.id===me?' · це я':'')+'</span><span class="mut" style="font-size:12px">'+s.won+' угод · '+s.active+' у роботі</span><span class="lbval">'+money(s.income)+' ₴</span></div>'
+   ).join('')+'</div>';
+ }
+
  const M=[{l:'💰 Дохід закрито',v:money(income)+' ₴',c:'g'},{l:'📈 У воронці',v:money(pipeline)+' ₴',c:'b'},{l:'🤝 Угод',v:won.length,c:'g'},{l:'⚙️ У роботі',v:work.length,c:'b'},{l:'🎯 Конверсія',v:conv+'%',c:''},{l:'⏰ Прострочені',v:over,c:over?'r':''},{l:'✅ Відкриті задачі',v:state.tasks.filter(x=>x.status!=='done').length,c:''},{l:'📇 Лідів',v:DATA.length,c:''}];
- let h='<div class="metrics">'+M.map(m=>'<div class="metric"><div class="lbl">'+m.l+'</div><div class="val '+m.c+'">'+m.v+'</div></div>').join('')+'</div>';
+ h+='<div class="metrics">'+M.map(m=>'<div class="metric"><div class="lbl">'+m.l+'</div><div class="val '+m.c+'">'+m.v+'</div></div>').join('')+'</div>';
  h+='<div class="sect">Воронка продажів</div><div class="funnel">'+STAGES.map(s=>'<div class="frow" data-goStage="'+s.k+'"><div class="fl"><span class="stagedot" style="background:'+s.c+'"></span>'+s.t+'</div><div class="ft"><div class="fb" style="width:'+Math.round(counts[s.k]/max*100)+'%;background:'+s.c+'"></div></div><div class="fc"><b>'+counts[s.k]+'</b> лідів'+(sums[s.k]?' · '+money(sums[s.k])+'₴':'')+'</div></div>').join('')+'</div>';
  const queue=DATA.filter(d=>{const r=rec(d);return r.next&&r.next<=t&&r.stage!=='won'&&r.stage!=='lost';}).sort((a,b)=>rec(a).next.localeCompare(rec(b).next));
  h+='<div class="sect">Черга на сьогодні '+(queue.length?'<span class="tag">'+queue.length+'</span>':'')+'</div>';
@@ -529,8 +559,8 @@ function viewDashboard(){
  $('content').innerHTML=h;
 }
 function qcardHTML(d){
- const r=rec(d),dc=dueClass(r.next);
- return '<div class="qcard '+dc+'" data-i="'+d._i+'"><div>'+stagePill(r.stage)+'</div><div class="qmain"><div class="qn">'+esc(d.name)+'</div><div class="qmeta">'+esc(d.city)+' · '+esc(d.niche)+' · '+(d.rev||'—')+'★</div></div><div>'+avatar(r.assignee)+'</div><div class="qact">'+(r.nextNote?esc(r.nextNote):'дія')+'</div><div class="due '+dc+'">'+(dc==='over'?'прострочено ':'')+fmtDate(r.next)+'</div></div>';
+ const r=rec(d),dc=dueClass(r.next),tel=digits(d.phone);
+ return '<div class="qcard '+dc+'" data-i="'+d._i+'"><div>'+stagePill(r.stage)+'</div><div class="qmain"><div class="qn">'+esc(d.name)+'</div><div class="qmeta">'+esc(d.city)+' · '+esc(d.niche)+' · '+(d.rev||'—')+'★</div></div><div>'+avatar(r.assignee)+'</div><div class="qact">'+(r.nextNote?esc(r.nextNote):'дія')+'</div><div class="due '+dc+'">'+(dc==='over'?'прострочено ':'')+fmtDate(r.next)+'</div>'+(tel?'<a class="btn sm call" href="tel:'+tel+'" title="Подзвонити">📞</a>':'')+'</div>';
 }
 
 /* ---------- TODAY ---------- */
@@ -602,9 +632,8 @@ function viewBoard(r){
 }
 
 /* ---------- TEAM ---------- */
-function viewTeam(){
- const all=DATA.map(rec);
- const stats=state.members.map(m=>{
+function teamStats(){
+ return state.members.map(m=>{
    const leads=DATA.filter(d=>rec(d).assignee===m.id);
    const rc=leads.map(rec);
    const won=rc.filter(r=>r.stage==='won'),active=rc.filter(r=>ACTIVE.has(r.stage));
@@ -614,6 +643,9 @@ function viewTeam(){
    const tDone=state.tasks.filter(x=>x.assignee===m.id&&x.status==='done').length;
    return {m,leads:leads.length,active:active.length,won:won.length,income,conv:decided?Math.round(won.length/decided*100):0,tOpen,tDone};
  }).sort((a,b)=>b.income-a.income);
+}
+function viewTeam(){
+ const stats=teamStats();
  let h=CLOUD
    ?'<div class="mut" style="font-size:12.5px;margin-bottom:10px">Нових учасників додає власник у Supabase (Authentication → Users → Add user). Після першого входу людина сама з’явиться тут.</div>'
    :'<div class="addrow"><input id="newMemberName" placeholder="Імʼя нового учасника" style="border:1px solid var(--line2);border-radius:7px;padding:7px 10px"><button class="btn pri" id="addMemberBtn">＋ Додати</button></div>';
@@ -740,8 +772,20 @@ $('newLeadBtn').addEventListener('click',openLeadModal);
 
 /* ---------- CALL MODE ---------- */
 let callQueue=[],callIdx=0;
-function startCallMode(){
- callQueue=filtered();
+function priorityQueue(){
+ const t=todayStr();
+ const mine=me?DATA.filter(d=>rec(d).assignee===me):[];
+ const pool=mine.length?mine:DATA;
+ const active=d=>!['won','lost'].includes(rec(d).stage);
+ const overdue=pool.filter(d=>active(d)&&rec(d).next&&rec(d).next<t);
+ const today=pool.filter(d=>active(d)&&rec(d).next===t);
+ const fresh=pool.filter(d=>active(d)&&rec(d).stage==='new'&&!rec(d).next);
+ const seen=new Set(),out=[];
+ [...overdue,...today,...fresh].forEach(d=>{if(!seen.has(d._id)){seen.add(d._id);out.push(d);}});
+ return out;
+}
+function startCallMode(list){
+ callQueue=list||filtered();
  if(!callQueue.length){toast('Немає лідів під поточні фільтри');return;}
  callIdx=0;renderCallMode();$('callMode').classList.add('show');
 }
@@ -806,6 +850,7 @@ $('content').addEventListener('click',e=>{
  if(e.target.closest('#newTaskBtn')){openTaskModal(null);return;}
  const pf=e.target.closest('[data-pf]');if(pf){taskPersonFilter=pf.dataset.pf;viewTasks();return;}
  const gv=e.target.closest('[data-goView]');if(gv){setView(gv.dataset.goView);return;}
+ if(e.target.closest('[data-startcall]')){startCallMode(priorityQueue());return;}
  const gs=e.target.closest('[data-goStage]');if(gs){stageFilter=gs.dataset.goStage;setView('table');return;}
  const td=e.target.closest('[data-tdone]');if(td){const x=state.tasks.find(t=>t.id===td.dataset.tdone);if(x){x.status=td.checked?'done':'todo';Backend.saveTask(x);renderSidebar();rerender();}return;}
  const dt=e.target.closest('[data-deltask]');if(dt){const id=dt.dataset.deltask;state.tasks=state.tasks.filter(t=>t.id!==id);Backend.delTask(id);renderSidebar();rerender();return;}
