@@ -200,7 +200,8 @@ textarea.note{width:100%;min-height:54px;border:1px solid var(--line2);border-ra
 .tbox label{display:block;font-size:12px;color:var(--txt2);margin-bottom:5px;font-weight:500}
 .tbox input,.tbox select{width:100%;border:1px solid var(--line2);border-radius:9px;padding:8px 10px;outline:0;transition:border-color .12s,box-shadow .12s}
 .tbox input:focus,.tbox select:focus{border-color:var(--acc);box-shadow:0 0 0 3px var(--accbg)}
-#authScreen{position:fixed;inset:0;background:var(--side);display:flex;align-items:center;justify-content:center;z-index:300}
+#authScreen{position:fixed;inset:0;background:radial-gradient(circle at 20% 15%,#eef0ff 0%,var(--side) 45%),radial-gradient(circle at 85% 85%,#e2f8ee 0%,transparent 50%);display:flex;align-items:center;justify-content:center;z-index:300}
+.qcard:active,.kcard:active,.tcard:active,.metric:active,.lbrow:active{transform:scale(.985)}
 #authScreen.hidden{display:none}
 .authbox{background:var(--bg);border:1px solid var(--line2);border-radius:18px;padding:30px 28px;width:min(340px,92vw);box-shadow:var(--sh-lg)}
 .authbox h2{margin:0 0 5px;font-size:18px;font-weight:800}
@@ -348,6 +349,33 @@ const ACTIVE=new Set(['draft','pitch','edits','handoff']);
 const TCOLS=[{k:'todo',t:'Треба зробити',c:'#9b9a97'},{k:'doing',t:'В роботі',c:'#2383e2'},{k:'done',t:'Готово',c:'#448361'}];
 const TC=Object.fromEntries(TCOLS.map(c=>[c.k,c]));
 const PALETTE=['#e2563b','#d9730d','#cb912f','#448361','#2383e2','#9065b0','#c14c8a','#0f7b6c','#5b6ac4','#b8574f'];
+const QUOTES=[
+ 'Одна реальна розмова з клієнтом варта десяти годин роздумів «а раптом не вийде».',
+ 'Відмова — це не «ні назавжди», це «ні сьогодні». Наступний дзвінок.',
+ 'Клієнт купує не сайт, а впевненість, що про нього подбають. Продавай впевненість.',
+ 'Найкращий час зателефонувати — той, що вже настав.',
+ 'Маленька щоденна дія б’є геніальний план, який відкладено на завтра.',
+ 'Ти вже зробив 90% роботи, коли підняв слухавку.',
+ 'Черга з 20 лідів — це просто 20 разів по одному дзвінку.',
+ 'Продаж починається там, де закінчується страх почути «ні».',
+ 'Найдорожчий лід — той, якому не зателефонували.',
+ 'Прогрес важливіший за досконалість. Дзвони, а не редагуй скрипт вдесяте.',
+ 'Сильна репутація клієнта без сайту — це подарунок. Хтось інший його не залишить.',
+ 'Дисципліна — це коли дзвониш і в той день, коли не хочеться.',
+ 'Кожне «так» ховається за трьома «ні». Рахуй «ні» як прогрес.',
+ 'Не чекай ідеального моменту для дзвінка — його не існує.',
+ 'Твоя енергія в перших 10 секундах розмови вирішує половину справи.',
+ 'Закрита угода сьогодні краща за ідеальний лід, якого «обробиш завтра».',
+ 'Люди відчувають, коли ти віриш у те, що пропонуєш.',
+ 'Найшвидший спосіб зрости — це зробити ще один дзвінок прямо зараз.',
+ 'Мета без дедлайну — просто мрія. Постав собі цифру на цей місяць.',
+ 'Команда, що рухається разом, доходить швидше, ніж супергерой поодинці.'
+];
+function dailyQuote(){
+ const d=new Date();
+ const day=Math.floor((d-new Date(d.getFullYear(),0,0))/86400000);
+ return QUOTES[day%QUOTES.length];
+}
 
 /* ---------- STATE ---------- */
 let state={members:[],leadState:{},tasks:[]};
@@ -383,7 +411,8 @@ function scriptTxt(d){
  const soc=d.site==='Лише Instagram'?'а сайту, куди вести клієнтів, немає':'а сайту немає';
  return 'Вітаю! Роблю продаючі сайти для '+(d.niche||'вашого бізнесу').toLowerCase()+'. Подивився ваш профіль у Google — сильна репутація ('+rev+' відгуків), '+soc+'. Я вже підготував чорновий сайт саме під вас — можу скинути на перегляд, ні до чого не зобов’язує. Зручно глянути?';
 }
-function rec(d){ if(!state.leadState[d._id]) state.leadState[d._id]={stage:'new',amount:'',next:'',nextNote:'',assignee:'',notes:[]}; return state.leadState[d._id]; }
+function rec(d){ if(!state.leadState[d._id]) state.leadState[d._id]={stage:'new',amount:'',wonAt:null,next:'',nextNote:'',assignee:'',notes:[]}; return state.leadState[d._id]; }
+function setStage(d,stage){const rc=rec(d);if(stage==='won'&&rc.stage!=='won'&&!rc.wonAt)rc.wonAt=new Date().toISOString();rc.stage=stage;saveLead(d._id);}
 
 /* ============ BACKEND ============ */
 let sb=null;
@@ -444,13 +473,22 @@ const SupabaseBackend={
    }
  },
  async reload(){
-   const [ld,m,l,t]=await Promise.all([sb.from('leads').select('*').order('created_at'),sb.from('members').select('*'),sb.from('lead_state').select('*'),sb.from('tasks').select('*')]);
+   const [ld,m,l,t,da]=await Promise.all([sb.from('leads').select('*').order('created_at'),sb.from('members').select('*'),sb.from('lead_state').select('*'),sb.from('tasks').select('*'),sb.from('deal_amounts').select('*')]);
    if(ld.data){DATA=ld.data.map(r=>({...r,_id:r.id}));indexData();refreshFilterOptions();}
    state.members=m.data||[];
-   state.leadState={};(l.data||[]).forEach(r=>state.leadState[r.lead_id]={stage:r.stage||'new',amount:r.amount||'',next:r.next_action||'',nextNote:r.next_note||'',assignee:r.assignee||'',notes:r.notes||[]});
+   state.leadState={};(l.data||[]).forEach(r=>state.leadState[r.lead_id]={stage:r.stage||'new',amount:'',wonAt:null,next:r.next_action||'',nextNote:r.next_note||'',assignee:r.assignee||'',notes:r.notes||[]});
+   (da.data||[]).forEach(r=>{if(!state.leadState[r.lead_id])state.leadState[r.lead_id]={stage:'new',amount:'',wonAt:null,next:'',nextNote:'',assignee:'',notes:[]};state.leadState[r.lead_id].amount=r.amount==null?'':r.amount;state.leadState[r.lead_id].wonAt=r.won_at;});
    state.tasks=t.data||[];
  },
- async saveLead(id){const s=state.leadState[id];const{error}=await sb.from('lead_state').upsert({lead_id:id,stage:s.stage,amount:s.amount===''?null:s.amount,next_action:s.next||null,next_note:s.nextNote,assignee:s.assignee||null,notes:s.notes},{onConflict:'lead_id'});if(error){console.error('saveLead',error);toast('Не вдалося зберегти: '+error.message);}},
+ async saveLead(id){
+   const s=state.leadState[id];
+   const[r1,r2]=await Promise.all([
+     sb.from('lead_state').upsert({lead_id:id,stage:s.stage,next_action:s.next||null,next_note:s.nextNote,assignee:s.assignee||null,notes:s.notes},{onConflict:'lead_id'}),
+     sb.from('deal_amounts').upsert({lead_id:id,amount:s.amount===''?null:s.amount,won_at:s.wonAt||null},{onConflict:'lead_id'})
+   ]);
+   if(r1.error){console.error('saveLead',r1.error);toast('Не вдалося зберегти: '+r1.error.message);}
+   if(r2.error){console.error('saveLead amount',r2.error);toast('Не вдалося зберегти суму: '+r2.error.message);}
+ },
  async saveTask(t){const{error}=await sb.from('tasks').upsert(t);if(error){console.error('saveTask',error);toast('Не вдалося зберегти задачу: '+error.message);}},
  async delTask(id){const{error}=await sb.from('tasks').delete().eq('id',id);if(error)console.error('delTask',error);},
  async saveMember(m){const{error}=await sb.from('members').upsert(m);if(error){console.error('saveMember',error);toast('Не вдалося зберегти учасника: '+error.message);}},
@@ -549,20 +587,41 @@ function viewDashboard(){
  let h='<div class="hero"><div class="htxt"><h2>'+(myName?'Привіт, '+esc(myName)+'! 👋':'Привіт! 👋')+'</h2><p>'+(pq.length?'Сьогодні варто обробити '+pq.length+' '+(pq.length===1?'ліда':'лідів')+' — тиснеш і йдеш по черзі, без пошуку по таблиці.':'Черга порожня — усе актуальне вже оброблено. 🎉')+'</p></div>'+
    (pq.length?'<button class="btn" data-startcall>▶ Почати дзвонити ('+pq.length+')</button>':'')+
  '</div>';
+ h+='<div class="mut" style="font-size:13px;font-style:italic;margin:-14px 0 22px;padding:0 2px">💬 '+esc(dailyQuote())+'</div>';
 
- const stats=teamStats().filter(s=>s.leads>0||s.income>0);
+ const amIRestricted=(member(me)||{}).restricted_finance;
+ let stats=teamStats().filter(s=>s.leads>0||s.income>0);
+ if(amIRestricted)stats=stats.slice().sort((a,b)=>(a.m.id===me?-1:b.m.id===me?1:0));
  if(stats.length){
-   h+='<div class="sect">🏆 Топ команди</div><div class="lb">'+stats.slice(0,5).map((s,i)=>
-     '<div class="lbrow"><span class="lbrank">'+(i+1)+'</span>'+avatar(s.m.id)+'<span class="lbname">'+esc(s.m.name)+(s.m.id===me?' · це я':'')+'</span><span class="mut" style="font-size:12px">'+s.won+' угод · '+s.active+' у роботі</span><span class="lbval">'+money(s.income)+' ₴</span></div>'
-   ).join('')+'</div>';
+   h+='<div class="sect">🏆 Топ команди</div><div class="lb">'+stats.slice(0,5).map((s,i)=>{
+     const hide=amIRestricted&&s.m.id!==me;
+     return '<div class="lbrow"><span class="lbrank">'+(i+1)+'</span>'+avatar(s.m.id)+'<span class="lbname">'+esc(s.m.name)+(s.m.id===me?' · це я':'')+'</span><span class="mut" style="font-size:12px">'+s.won+' угод · '+s.active+' у роботі</span><span class="lbval">'+(hide?'—':money(s.income)+' ₴')+'</span></div>';
+   }).join('')+'</div>';
  }
 
- const M=[{l:'💰 Дохід закрито',v:money(income)+' ₴',c:'g'},{l:'📈 У воронці',v:money(pipeline)+' ₴',c:'b'},{l:'🤝 Угод',v:won.length,c:'g'},{l:'⚙️ У роботі',v:work.length,c:'b'},{l:'🎯 Конверсія',v:conv+'%',c:''},{l:'⏰ Прострочені',v:over,c:over?'r':''},{l:'✅ Відкриті задачі',v:state.tasks.filter(x=>x.status!=='done').length,c:''},{l:'📇 Лідів',v:DATA.length,c:''}];
+ const myGoal=(member(me)||{}).goal;
+ if(me){
+   const mine=stats.find(s=>s.m.id===me);
+   const myIncome=mine?mine.income:0;
+   const pct=myGoal?Math.min(100,Math.round(myIncome/myGoal*100)):0;
+   h+='<div class="sect">🎯 Моя ціль</div><div class="block" style="max-width:520px">'+
+     (myGoal?
+       '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:7px"><b>'+money(myIncome)+' ₴</b><span class="mut">з '+money(myGoal)+' ₴</span></div>'+
+       '<div style="height:10px;background:var(--side);border-radius:6px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,#4f46e5,#0f8a5f);border-radius:6px;transition:width .3s"></div></div>'+
+       '<div style="margin-top:8px"><a class="btn sm" data-setgoal>Змінити ціль</a></div>'
+       :'<div class="mut" style="font-size:13px;margin-bottom:8px">Постав собі ціль на місяць — і бачитимеш прогрес тут щоразу, як заходиш.</div><button class="btn sm pri" data-setgoal>🎯 Поставити ціль</button>')+
+   '</div>';
+ }
+
+ const dashLbl=amIRestricted?{income:'💰 Мій дохід',pipe:'📈 Моя воронка'}:{income:'💰 Дохід закрито',pipe:'📈 У воронці'};
+ const myIncomeShown=amIRestricted?((stats.find(s=>s.m.id===me)||{}).income||0):income;
+ const M=[{l:dashLbl.income,v:money(myIncomeShown)+' ₴',c:'g'},{l:dashLbl.pipe,v:money(pipeline)+' ₴',c:'b'},{l:'🤝 Угод',v:won.length,c:'g'},{l:'⚙️ У роботі',v:work.length,c:'b'},{l:'🎯 Конверсія',v:conv+'%',c:''},{l:'⏰ Прострочені',v:over,c:over?'r':''},{l:'✅ Відкриті задачі',v:state.tasks.filter(x=>x.status!=='done').length,c:''},{l:'📇 Лідів',v:DATA.length,c:''}];
  h+='<div class="metrics">'+M.map(m=>'<div class="metric"><div class="lbl">'+m.l+'</div><div class="val '+m.c+'">'+m.v+'</div></div>').join('')+'</div>';
  h+='<div class="sect">Воронка продажів</div><div class="funnel">'+STAGES.map(s=>'<div class="frow" data-goStage="'+s.k+'"><div class="fl"><span class="stagedot" style="background:'+s.c+'"></span>'+s.t+'</div><div class="ft"><div class="fb" style="width:'+Math.round(counts[s.k]/max*100)+'%;background:'+s.c+'"></div></div><div class="fc"><b>'+counts[s.k]+'</b> лідів'+(sums[s.k]?' · '+money(sums[s.k])+'₴':'')+'</div></div>').join('')+'</div>';
  const queue=DATA.filter(d=>{const r=rec(d);return r.next&&r.next<=t&&r.stage!=='won'&&r.stage!=='lost';}).sort((a,b)=>rec(a).next.localeCompare(rec(b).next));
  h+='<div class="sect">Черга на сьогодні '+(queue.length?'<span class="tag">'+queue.length+'</span>':'')+'</div>';
  h+=queue.length?('<div class="queue">'+queue.slice(0,6).map(qcardHTML).join('')+'</div>'+(queue.length>6?'<div style="margin-top:10px"><button class="btn sm" data-goView="today">Показати всі →</button></div>':'')):'<div class="empty">Немає дій на сьогодні. Признач дедлайни лідам. 🎯</div>';
+ h+='<div class="sect">📚 Навчання</div><div class="block" style="max-width:520px"><div class="body">Ліди генеруються під конкретний бізнес через промт у картці ліда — вставляєш його в Claude Code, і той збирає чернетку сайту. Офіційні матеріали:</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><a class="btn sm" href="https://claude.com/claude-code" target="_blank" rel="noopener">🌐 Про Claude Code</a><a class="btn sm" href="https://docs.claude.com" target="_blank" rel="noopener">📖 Документація Anthropic</a></div></div>';
  $('content').innerHTML=h;
 }
 function qcardHTML(d){
@@ -639,32 +698,57 @@ function viewBoard(r){
 }
 
 /* ---------- TEAM ---------- */
+function commissionSplit(member,amount,isFirst){
+ const amt=Number(amount)||0;
+ if(isFirst&&member.commission_flat_first!=null){
+   const flat=Number(member.commission_flat_first)||0;
+   return {mine:Math.min(flat,amt)||flat,ownerCut:Math.max(0,amt-flat)};
+ }
+ const pct=Number(member.commission_cut_pct)||0;
+ const cut=amt*pct/100;
+ return {mine:amt-cut,ownerCut:cut};
+}
 function teamStats(){
- return state.members.map(m=>{
+ const owner=state.members.find(m=>m.is_owner);
+ let ownerExtra=0;
+ const stats=state.members.map(m=>{
    const leads=DATA.filter(d=>rec(d).assignee===m.id);
    const rc=leads.map(rec);
    const won=rc.filter(r=>r.stage==='won'),active=rc.filter(r=>ACTIVE.has(r.stage));
-   const income=won.reduce((s,r)=>s+(Number(r.amount)||0),0);
+   const wonSorted=won.slice().sort((a,b)=>(a.wonAt||'').localeCompare(b.wonAt||''));
+   let income=0;
+   wonSorted.forEach((r,i)=>{
+     const sp=commissionSplit(m,r.amount,i===0);
+     income+=sp.mine;
+     if(owner&&owner.id!==m.id)ownerExtra+=sp.ownerCut;
+   });
    const decided=won.length+rc.filter(r=>r.stage==='lost').length;
    const tOpen=state.tasks.filter(x=>x.assignee===m.id&&x.status!=='done').length;
    const tDone=state.tasks.filter(x=>x.assignee===m.id&&x.status==='done').length;
    return {m,leads:leads.length,active:active.length,won:won.length,income,conv:decided?Math.round(won.length/decided*100):0,tOpen,tDone};
- }).sort((a,b)=>b.income-a.income);
+ });
+ if(owner){const os=stats.find(s=>s.m.id===owner.id);if(os)os.income+=ownerExtra;}
+ return stats.sort((a,b)=>b.income-a.income);
 }
 function viewTeam(){
- const stats=teamStats();
+ const amIRestricted=(member(me)||{}).restricted_finance;
+ let stats=teamStats();
+ if(amIRestricted)stats=stats.slice().sort((a,b)=>(a.m.id===me?-1:b.m.id===me?1:0));
  let h=CLOUD
    ?'<div class="mut" style="font-size:12.5px;margin-bottom:10px">Нових учасників додає власник у Supabase (Authentication → Users → Add user). Після першого входу людина сама з’явиться тут.</div>'
    :'<div class="addrow"><input id="newMemberName" placeholder="Імʼя нового учасника" style="border:1px solid var(--line2);border-radius:7px;padding:7px 10px"><button class="btn pri" id="addMemberBtn">＋ Додати</button></div>';
  if(!state.members.length)h+='<div class="empty">Ще немає учасників. Додай себе й партнерів — і зможете призначати ліди та задачі одне одному. 👥</div>';
- h+=stats.map((s,i)=>'<div class="tcard"><div style="display:flex;align-items:center;gap:10px;flex:1;min-width:180px">'+avatar(s.m.id,'lg')+'<div><b>'+esc(s.m.name)+(s.m.id===me?' · це я':'')+'</b>'+(i===0&&s.income>0?' 🏆':'')+'<br><span class="mut" style="font-size:12px">'+esc(s.m.id.slice(0,8))+'</span></div></div>'+
+ h+=stats.map((s,i)=>{
+   const hide=amIRestricted&&s.m.id!==me;
+   return '<div class="tcard"><div style="display:flex;align-items:center;gap:10px;flex:1;min-width:180px">'+avatar(s.m.id,'lg')+'<div><b>'+esc(s.m.name)+(s.m.id===me?' · це я':'')+'</b>'+(!amIRestricted&&i===0&&s.income>0?' 🏆':'')+'<br><span class="mut" style="font-size:12px">'+esc(s.m.id.slice(0,8))+'</span></div></div>'+
    '<div class="tstat"><b>'+s.leads+'</b><span>лідів</span></div>'+
    '<div class="tstat"><b class="val b" style="color:var(--acc)">'+s.active+'</b><span>у роботі</span></div>'+
    '<div class="tstat"><b style="color:var(--green)">'+s.won+'</b><span>угод</span></div>'+
-   '<div class="tstat"><b style="color:var(--green)">'+money(s.income)+'</b><span>₴ дохід</span></div>'+
+   '<div class="tstat"><b style="color:var(--green)">'+(hide?'—':money(s.income))+'</b><span>₴ дохід</span></div>'+
    '<div class="tstat"><b>'+s.conv+'%</b><span>конверсія</span></div>'+
    '<div class="tstat"><b>'+s.tOpen+'/'+s.tDone+'</b><span>задачі</span></div>'+
-   '<button class="btn sm dng" data-delmember="'+s.m.id+'">Видалити</button></div>').join('');
+   '<button class="btn sm dng" data-delmember="'+s.m.id+'">Видалити</button></div>';
+ }).join('');
  $('content').innerHTML=h;
 }
 
@@ -699,7 +783,7 @@ function setPStage(d){const s=STG[rec(d).stage];const ps=$('pStage');ps.style.ba
 function refreshPanel(d){$('pbody').innerHTML=detailHTML(d);setPStage(d);bindPanel(d);}
 function bindPanel(d){
  const root=$('pbody');
- root.querySelector('[data-stg]').addEventListener('click',e=>{const b=e.target.closest('button[data-stage]');if(!b)return;rec(d).stage=b.dataset.stage;saveLead(d._id);refreshPanel(d);renderSidebar();});
+ root.querySelector('[data-stg]').addEventListener('click',e=>{const b=e.target.closest('button[data-stage]');if(!b)return;setStage(d,b.dataset.stage);refreshPanel(d);renderSidebar();});
  root.querySelectorAll('[data-f]').forEach(inp=>inp.addEventListener('input',()=>{rec(d)[inp.dataset.f]=inp.value;saveLead(d._id);if(['amount','next','assignee'].includes(inp.dataset.f))renderSidebar();}));
  root.querySelectorAll('[data-copy]').forEach(b=>b.addEventListener('click',ev=>{ev.stopPropagation();copy(b.dataset.copy==='script'?scriptTxt(d):d.prompt,'Скопійовано');}));
  root.querySelectorAll('[data-log]').forEach(b=>b.addEventListener('click',()=>{addNote(d,b.dataset.log,true);refreshPanel(d);renderSidebar();}));
@@ -817,7 +901,7 @@ function renderCallMode(){
    '<div class="cmlog"><button class="btn sm" data-log="Подзвонив">☎ Подзвонив</button><button class="btn sm" data-log="Не відповіли">✖ Не відповіли</button><button class="btn sm" data-log="Скинув чернетку">📤 Чернетка</button><button class="btn sm" data-log="Зацікавився">👍 Інтерес</button></div>'+
  '</div>';
  const root=$('cmBody');
- root.querySelector('[data-stg]').addEventListener('click',e=>{const b=e.target.closest('button[data-stage]');if(!b)return;rc.stage=b.dataset.stage;saveLead(d._id);renderCallMode();renderSidebar();});
+ root.querySelector('[data-stg]').addEventListener('click',e=>{const b=e.target.closest('button[data-stage]');if(!b)return;setStage(d,b.dataset.stage);renderCallMode();renderSidebar();});
  root.querySelector('[data-copy]').addEventListener('click',()=>copy(scriptTxt(d),'Скопійовано'));
  root.querySelectorAll('[data-log]').forEach(b=>b.addEventListener('click',()=>{addNote(d,b.dataset.log,true);renderSidebar();callGo(1);}));
 }
@@ -858,6 +942,12 @@ $('content').addEventListener('click',e=>{
  const pf=e.target.closest('[data-pf]');if(pf){taskPersonFilter=pf.dataset.pf;viewTasks();return;}
  const gv=e.target.closest('[data-goView]');if(gv){setView(gv.dataset.goView);return;}
  if(e.target.closest('[data-startcall]')){startCallMode(priorityQueue());return;}
+ if(e.target.closest('[data-setgoal]')){
+   const m=member(me);if(!m)return;
+   const v=prompt('Яка ціль по доходу на цей місяць (₴)?',m.goal||'');
+   if(v!=null&&v.trim()!==''){const n=Number(v.replace(/[^0-9.]/g,''));if(n>0){m.goal=n;Backend.saveMember(m);rerender();toast('Ціль збережено 🎯');}}
+   return;
+ }
  const gs=e.target.closest('[data-goStage]');if(gs){stageFilter=gs.dataset.goStage;setView('table');return;}
  const td=e.target.closest('[data-tdone]');if(td){const x=state.tasks.find(t=>t.id===td.dataset.tdone);if(x){x.status=td.checked?'done':'todo';Backend.saveTask(x);renderSidebar();rerender();}return;}
  const dt=e.target.closest('[data-deltask]');if(dt){const id=dt.dataset.deltask;state.tasks=state.tasks.filter(t=>t.id!==id);Backend.delTask(id);renderSidebar();rerender();return;}
@@ -871,7 +961,7 @@ let dragI=null,dragTask=null;
 $('content').addEventListener('dragstart',e=>{const c=e.target.closest('.kcard');if(!c)return;if(c.dataset.i!=null)dragI=+c.dataset.i;if(c.dataset.task)dragTask=c.dataset.task;e.dataTransfer.effectAllowed='move';});
 $('content').addEventListener('dragover',e=>{const col=e.target.closest('.col');if(!col)return;e.preventDefault();document.querySelectorAll('.col').forEach(c=>c.classList.toggle('dragover',c===col));});
 $('content').addEventListener('drop',e=>{const col=e.target.closest('.col');document.querySelectorAll('.col').forEach(c=>c.classList.remove('dragover'));if(!col)return;e.preventDefault();
- if(col.dataset.stage&&dragI!=null){rec(DATA[dragI]).stage=col.dataset.stage;saveLead(DATA[dragI]._id);}
+ if(col.dataset.stage&&dragI!=null){setStage(DATA[dragI],col.dataset.stage);}
  if(col.dataset.tstatus&&dragTask){const x=state.tasks.find(t=>t.id===dragTask);if(x){x.status=col.dataset.tstatus;Backend.saveTask(x);}}
  dragI=null;dragTask=null;renderSidebar();rerender();
 });
