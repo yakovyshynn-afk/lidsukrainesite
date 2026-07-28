@@ -279,6 +279,7 @@ textarea.note{width:100%;min-height:54px;border:1px solid var(--line2);border-ra
        <select class="filt" id="assignee"></select>
        <select class="filt" id="sort">
          <option value="stage">Сортувати: за етапом</option>
+         <option value="priority">🔥 За пріоритетом</option>
          <option value="due">За дедлайном</option>
          <option value="rev">За відгуками</option>
          <option value="amt">За сумою</option>
@@ -523,7 +524,33 @@ function scriptTxt(d){
  return 'Вітаю! Роблю продаючі сайти для '+(d.niche||'вашого бізнесу').toLowerCase()+'. Подивився ваш профіль у Google — сильна репутація ('+rev+' відгуків), '+soc+'. Я вже підготував чорновий сайт саме під вас — можу скинути на перегляд, ні до чого не зобов’язує. Зручно глянути?';
 }
 function rec(d){ if(!state.leadState[d._id]) state.leadState[d._id]={stage:'new',amount:'',wonAt:null,next:'',nextNote:'',assignee:'',notes:[]}; return state.leadState[d._id]; }
-function setStage(d,stage){const rc=rec(d);if(stage==='won'&&rc.stage!=='won'&&!rc.wonAt)rc.wonAt=new Date().toISOString();rc.stage=stage;saveLead(d._id);}
+function setStage(d,stage){
+ const rc=rec(d),prev=rc.stage;
+ if(stage==='won'&&rc.stage!=='won'&&!rc.wonAt)rc.wonAt=new Date().toISOString();
+ if(prev!==stage){
+   const fromT=(STG[prev]||{}).t||prev,toT=(STG[stage]||{}).t||stage;
+   rc.notes=rc.notes||[];
+   rc.notes.push({t:new Date().toLocaleString('uk-UA',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}),text:'🔄 Етап: '+fromT+' → '+toT,by:(member(me)||{}).name||'',sys:true});
+ }
+ rc.stage=stage;saveLead(d._id);
+}
+/* Лід-скоринг: наскільки лід «гарячий» і потребує уваги зараз.
+   Компоненти: етап воронки (ближче до угоди — вагоміше), прострочення дедлайну
+   (що довше прострочено — то вища терміновість, без next — теж терміново, це
+   означає, що ліду взагалі не запланували наступний крок) і кредит довіри
+   з кількості відгуків бізнесу. Won/Lost не скоряться — вони вже не активні. */
+function leadPriority(d){
+ const rc=rec(d);
+ if(rc.stage==='won'||rc.stage==='lost') return -999;
+ const stageW={new:10,draft:22,pitch:34,edits:46,handoff:58}[rc.stage]||0;
+ let urgency;
+ if(rc.next){
+   const days=Math.round((new Date(todayStr())-new Date(rc.next))/86400000);
+   urgency=days>0?Math.min(days,21)*4:6;
+ }else urgency=30;
+ const credibility=Math.min(d.rev||0,400)/20;
+ return stageW+urgency+credibility;
+}
 
 /* ============ BACKEND ============ */
 let sb=null;
@@ -644,6 +671,7 @@ function filtered(){
  else if(k==='rev')r.sort((a,b)=>b.rev-a.rev);
  else if(k==='amt')r.sort((a,b)=>(Number(rec(b).amount)||0)-(Number(rec(a).amount)||0));
  else if(k==='name')r.sort((a,b)=>a.name.localeCompare(b.name,'uk'));
+ else if(k==='priority')r.sort((a,b)=>leadPriority(b)-leadPriority(a));
  return r;
 }
 
@@ -689,6 +717,13 @@ function viewDashboard(){
  const income=won.reduce((s,r)=>s+(Number(r.amount)||0),0),pipeline=work.reduce((s,r)=>s+(Number(r.amount)||0),0);
  const decided=won.length+lost.length,conv=decided?Math.round(won.length/decided*100):0;
  const over=all.filter(r=>r.next&&r.next<t&&r.stage!=='won'&&r.stage!=='lost').length;
+ /* Прогноз доходу: сума в роботі, зважена на орієнтовну ймовірність закриття
+    по етапу (евристика, не статистична модель — уточнити варто, коли
+    накопичиться реальна історія переходів між етапами). Для лідів без
+    вказаної суми угоди береться середня сума вже закритих угод. */
+ const stageProb={new:.1,draft:.25,pitch:.45,edits:.65,handoff:.85};
+ const avgWon=won.length?income/won.length:0;
+ const forecast=work.reduce((s,r)=>s+(Number(r.amount)||avgWon)*(stageProb[r.stage]||.2),0);
  const counts={};STAGES.forEach(s=>counts[s.k]=0);all.forEach(r=>counts[r.stage]++);
  const sums={};STAGES.forEach(s=>sums[s.k]=0);DATA.forEach(d=>{const r=rec(d);sums[r.stage]+=(Number(r.amount)||0);});
  const max=Math.max(1,...STAGES.map(s=>counts[s.k]));
@@ -726,10 +761,10 @@ function viewDashboard(){
 
  const dashLbl=amIRestricted?{income:'💰 Мій дохід',pipe:'📈 Моя воронка'}:{income:'💰 Дохід закрито',pipe:'📈 У воронці'};
  const myIncomeShown=amIRestricted?((stats.find(s=>s.m.id===me)||{}).income||0):income;
- const M=[{l:dashLbl.income,v:money(myIncomeShown)+' ₴',c:'g'},{l:dashLbl.pipe,v:money(pipeline)+' ₴',c:'b'},{l:'🤝 Угод',v:won.length,c:'g'},{l:'⚙️ У роботі',v:work.length,c:'b'},{l:'🎯 Конверсія',v:conv+'%',c:''},{l:'⏰ Прострочені',v:over,c:over?'r':''},{l:'✅ Відкриті задачі',v:state.tasks.filter(x=>x.status!=='done').length,c:''},{l:'📇 Лідів',v:DATA.length,c:''}];
+ const M=[{l:dashLbl.income,v:money(myIncomeShown)+' ₴',c:'g'},{l:dashLbl.pipe,v:money(pipeline)+' ₴',c:'b'},{l:'📊 Прогноз (оцінка)',v:money(Math.round(forecast))+' ₴',c:''},{l:'🤝 Угод',v:won.length,c:'g'},{l:'⚙️ У роботі',v:work.length,c:'b'},{l:'🎯 Конверсія',v:conv+'%',c:''},{l:'⏰ Прострочені',v:over,c:over?'r':''},{l:'✅ Відкриті задачі',v:state.tasks.filter(x=>x.status!=='done').length,c:''},{l:'📇 Лідів',v:DATA.length,c:''}];
  h+='<div class="metrics">'+M.map(m=>'<div class="metric"><div class="lbl">'+m.l+'</div><div class="val '+m.c+'">'+m.v+'</div></div>').join('')+'</div>';
  h+='<div class="sect">Воронка продажів</div><div class="funnel">'+STAGES.map(s=>'<div class="frow" data-goStage="'+s.k+'"><div class="fl"><span class="stagedot" style="background:'+s.c+'"></span>'+s.t+'</div><div class="ft"><div class="fb" style="width:'+Math.round(counts[s.k]/max*100)+'%;background:'+s.c+'"></div></div><div class="fc"><b>'+counts[s.k]+'</b> лідів'+(sums[s.k]?' · '+money(sums[s.k])+'₴':'')+'</div></div>').join('')+'</div>';
- const queue=DATA.filter(d=>{const r=rec(d);return r.next&&r.next<=t&&r.stage!=='won'&&r.stage!=='lost';}).sort((a,b)=>rec(a).next.localeCompare(rec(b).next));
+ const queue=DATA.filter(d=>{const r=rec(d);return r.next&&r.next<=t&&r.stage!=='won'&&r.stage!=='lost';}).sort((a,b)=>rec(a).next.localeCompare(rec(b).next)||leadPriority(b)-leadPriority(a));
  h+='<div class="sect">Черга на сьогодні '+(queue.length?'<span class="tag">'+queue.length+'</span>':'')+'</div>';
  h+=queue.length?('<div class="queue">'+queue.slice(0,6).map(qcardHTML).join('')+'</div>'+(queue.length>6?'<div style="margin-top:10px"><button class="btn sm" data-goView="today">Показати всі →</button></div>':'')):'<div class="empty">Немає дій на сьогодні. Признач дедлайни лідам. 🎯</div>';
  $('content').innerHTML=h;
@@ -946,6 +981,8 @@ function viewTeam(){
    ?'<div class="mut" style="font-size:12.5px;margin-bottom:10px">Нових учасників додає власник у Supabase (Authentication → Users → Add user). Після першого входу людина сама з’явиться тут.</div>'
    :'<div class="addrow"><input id="newMemberName" placeholder="Імʼя нового учасника" style="border:1px solid var(--line2);border-radius:7px;padding:7px 10px"><button class="btn pri" id="addMemberBtn">＋ Додати</button></div>';
  if(!state.members.length)h+='<div class="empty">Ще немає учасників. Додай себе й партнерів — і зможете призначати ліди та задачі одне одному. 👥</div>';
+ const unassignedCount=DATA.filter(d=>!rec(d).assignee).length;
+ if(state.members.length&&unassignedCount)h+='<div class="block" style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><span class="mut" style="font-size:13px">🎲 Нерозподілених лідів: <b>'+unassignedCount+'</b></span><button class="btn sm pri" data-autoassign>Розподілити рівномірно</button></div>';
  h+=stats.map((s,i)=>{
    const hide=amIRestricted&&s.m.id!==me;
    return '<div class="tcard"><div style="display:flex;align-items:center;gap:10px;flex:1;min-width:180px">'+avatar(s.m.id,'lg')+'<div><b>'+esc(s.m.name)+(s.m.id===me?' · це я':'')+'</b>'+(!amIRestricted&&i===0&&s.income>0?' 🏆':'')+'<br><span class="mut" style="font-size:12px">'+esc(s.m.id.slice(0,8))+'</span></div></div>'+
@@ -1065,8 +1102,41 @@ $('lSave').addEventListener('click',async()=>{
  $('lSave').disabled=true;
  await Backend.createLead(lead);
  if(CLOUD)await Backend.reload();else applyLocalLeads();
+ autoAssign(lead.id);
  $('lSave').disabled=false;$('lmodal').classList.remove('show');toast('Ліда додано');rerenderAll();
 });
+
+/* ---------- АВТОПРИЗНАЧЕННЯ (round-robin за навантаженням) ---------- */
+function activeLoadByMember(){
+ const load={};state.members.forEach(m=>load[m.id]=0);
+ DATA.forEach(d=>{const r=rec(d);if(r.assignee&&ACTIVE.has(r.stage))load[r.assignee]=(load[r.assignee]||0)+1;});
+ return load;
+}
+function leastLoaded(load){
+ if(!state.members.length)return '';
+ let best=state.members[0].id,bestN=load[best]||0;
+ state.members.forEach(m=>{const n=load[m.id]||0;if(n<bestN){bestN=n;best=m.id;}});
+ return best;
+}
+function autoAssign(leadId){
+ const d=DATA.find(x=>x._id===leadId);if(!d)return;
+ const rc=rec(d);if(rc.assignee)return;
+ const who=leastLoaded(activeLoadByMember());if(!who)return;
+ rc.assignee=who;saveLead(d._id);
+}
+function autoAssignAllUnassigned(){
+ const load=activeLoadByMember();
+ const targets=DATA.filter(d=>!rec(d).assignee);
+ if(!targets.length){toast('Усі ліди вже мають виконавця');return;}
+ if(!state.members.length){toast('Спершу додай учасників команди');return;}
+ targets.forEach(d=>{
+   const who=leastLoaded(load);
+   rec(d).assignee=who;saveLead(d._id);
+   load[who]=(load[who]||0)+1;
+ });
+ toast('Розподілено '+targets.length+' '+(targets.length===1?'ліда':'лідів'));
+ renderSidebar();if(view==='team')rerender();
+}
 $('newLeadBtn').addEventListener('click',openLeadModal);
 
 /* ---------- QUIZ MODAL ---------- */
@@ -1185,6 +1255,7 @@ $('content').addEventListener('click',e=>{
  const dt=e.target.closest('[data-deltask]');if(dt){const id=dt.dataset.deltask;state.tasks=state.tasks.filter(t=>t.id!==id);Backend.delTask(id);renderSidebar();rerender();return;}
  const am=e.target.closest('#addMemberBtn');if(am){const inp=$('newMemberName');if(inp.value.trim()){const mm={id:uuid(),name:inp.value.trim(),color:PALETTE[state.members.length%PALETTE.length],pin:''};state.members.push(mm);Backend.saveMember(mm);renderMe();rerenderAll();toast('Учасника додано');}return;}
  const dm=e.target.closest('[data-delmember]');if(dm){if(confirm('Видалити учасника? Його ліди/задачі лишаться, але без виконавця.')){const id=dm.dataset.delmember;state.members=state.members.filter(m=>m.id!==id);Backend.delMember(id);if(me===id){me='';localStorage.removeItem('crm_me');}renderMe();rerenderAll();}return;}
+ if(e.target.closest('[data-autoassign]')){autoAssignAllUnassigned();return;}
  const task=e.target.closest('[data-task]');if(task&&!e.target.closest('input')){const x=state.tasks.find(t=>t.id===task.dataset.task);if(x&&x.lead_id){const d=DATA.find(d=>d._id===x.lead_id);if(d)openPanel(d);}return;}
  const card=e.target.closest('[data-i]');if(card){openPanel(DATA[+card.dataset.i]);}
 });
