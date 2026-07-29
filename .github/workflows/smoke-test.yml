@@ -1,0 +1,37 @@
+name: Перевірка index.html перед мержем
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Синтаксис inline-скриптів
+        run: node tests/check-syntax.js
+
+      - name: Встановити залежності
+        run: npm install
+
+      - name: Встановити Chromium для Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Димовий тест у браузері
+        run: npx playwright test
+
+      - name: Зберегти звіт Playwright (якщо тест впав)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
