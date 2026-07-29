@@ -449,6 +449,31 @@ const OWNER_TRACK={steps:[
  {id:'ownr4',t:'Психологічний тайм-менеджмент: як встигати НЕ все — коли задач у рази більше, ніж у команди',u:'https://www.youtube.com/watch?v=UnFKcz5TWXA'},
  {id:'ownr5',t:'Фінансова грамотність та інвестиції — Prometheus (масштабувати особистий дохід, не тільки командний)',u:'https://prometheus.org.ua/prometheus-free/financial-literacy-and-investments-for-beginners/'}
 ]};
+const OBJECTIONS=[
+ {q:'Нам не потрібен сайт, у нас і так усе добре через Instagram',a:'Instagram чудово показує роботи, але частина клієнтів шукає вас у Google, а не в Instagram — сайт це ще один канал заявок, а не заміна. Можу показати чорновий варіант безкоштовно — самі побачите, чи це працює для вас.'},
+ {q:'Дорого',a:'Розумію. Порівняйте з вартістю одного нового клієнта, якого сайт приведе за місяць — зазвичай окупається з першого запису. Можемо обговорити, що саме входить у цю суму.'},
+ {q:'Надішліть інформацію на пошту / у Viber',a:'Обов’язково надішлю. Щоб чернетка була максимально під вас, можна уточнити пару деталей просто зараз — займе хвилину, і я одразу зроблю перегляд.'},
+ {q:'Я подумаю',a:'Звісно. Що саме хотілось би обдумати — ціну, терміни чи сам вигляд сайту? Так я зможу одразу дати відповідь, а не чекати наступного дзвінка.'},
+ {q:'У мене вже є сайт, хоч і старий',a:'Тоді ще простіше — я вже підготував чернетку саме під ваш бізнес. Можу показати — порівняєте самі й вирішите, чи є сенс оновлювати.'},
+ {q:'Зателефоную сам, коли буде треба',a:'Добре, залишу свій номер. А поки — можна скину готову чернетку сайту? Ні до чого не зобов’язує, а рішення прийняти буде простіше, коли побачите результат.'}
+];
+function showCertificate(){
+ const m=member(me)||{},name=m.name||'Учасник команди';
+ const date=new Date().toLocaleDateString('uk-UA',{day:'2-digit',month:'long',year:'numeric'});
+ const w=window.open('','_blank');if(!w){toast('Дозволь спливаючі вікна, щоб побачити сертифікат');return;}
+ w.document.write('<!doctype html><html lang="uk"><head><meta charset="utf-8"><title>Сертифікат — '+esc(name)+'</title>'+
+   '<style>body{font-family:Georgia,serif;background:#f5f6fb;margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center}'+
+   '.cert{background:#fff;width:720px;max-width:92vw;padding:64px 56px;border-radius:6px;box-shadow:0 20px 60px rgba(0,0,0,.15);text-align:center;border:2px solid #4f46e5}'+
+   '.cert small{letter-spacing:.12em;text-transform:uppercase;color:#4f46e5;font-family:-apple-system,sans-serif;font-size:12px}'+
+   '.cert h1{font-size:32px;margin:16px 0 6px}.cert p{color:#444;font-size:15px;line-height:1.6}'+
+   '.cert .name{font-size:25px;margin:22px 0 6px;border-bottom:1px solid #ddd;display:inline-block;padding-bottom:8px}'+
+   '.cert .date{margin-top:26px;color:#888;font-size:13px}@media print{body{background:#fff}.cert{box-shadow:none;border:1px solid #ccc}}</style></head><body>'+
+   '<div class="cert"><small>Ліди · Захід+Центр — внутрішня академія</small><h1>🎓 Сертифікат</h1><p>Цей документ підтверджує, що</p>'+
+   '<div class="name">'+esc(name)+'</div>'+
+   '<p>успішно пройшов(-ла) увесь внутрішній курс — усі 3 етапи навчання,<br>включно з тестами з продажів, холодних дзвінків і роботи з запереченнями.</p>'+
+   '<div class="date">'+date+'</div></div></body></html>');
+ w.document.close();
+}
 function toggleAcademyStep(id){
  const m=member(me);if(!m)return;
  const done=new Set(m.academy_done||[]);
@@ -788,6 +813,14 @@ function viewAcademy(){
    '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:7px"><b>'+doneCount+' з '+allSteps.length+' кроків · Етап '+myStage+' з 3</b><span class="mut">'+pathPct+'%</span></div>'+
    '<div style="height:10px;background:var(--side);border-radius:6px;overflow:hidden"><div style="height:100%;width:'+pathPct+'%;background:linear-gradient(90deg,#4f46e5,#0f8a5f);border-radius:6px;transition:width .3s"></div></div>'+
  '</div>';
+ if(me&&doneCount===allSteps.length){
+   h+='<div class="block" style="max-width:680px;margin-bottom:22px;background:linear-gradient(135deg,var(--accbg),var(--greenbg));border:1px solid var(--line2)">'+
+     '<div class="mut" style="font-size:12px;text-transform:uppercase;letter-spacing:.06em">🏅 Сертифікат</div>'+
+     '<div style="font-size:18px;font-weight:700;margin:4px 0">Курс повністю пройдено</div>'+
+     '<div class="mut" style="font-size:13px;margin-bottom:10px">Усі 3 етапи, усі тести складено. Можна показати чи роздрукувати.</div>'+
+     '<button class="btn sm pri" data-showcert>🎓 Показати сертифікат</button>'+
+   '</div>';
+ }
  h+=ACADEMY_STAGES.map(st=>{
    const locked=st.n>myStage;
    const current=st.n===myStage;
@@ -846,6 +879,14 @@ function viewAcademy(){
    acadCard('Маркетинг і продажі (укр.)',[
      {t:'Let’s Start Marketing — канал про маркетинг і продажі',u:'https://www.youtube.com/@LetsStartMarketing'}
    ])+
+ '</div>';
+
+ h+='<div class="sect">💪 Тренажер заперечень — клікни на картку, щоб побачити відповідь</div>'+
+   '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;max-width:900px;margin-bottom:22px">'+
+   OBJECTIONS.map((o,i)=>'<div class="block" data-flip="'+i+'" style="cursor:pointer">'+
+     '<div style="font-weight:650;font-size:13.5px">❝'+esc(o.q)+'❞</div>'+
+     '<div class="obj-a hidden" style="font-size:13px;color:var(--txt2);margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">'+esc(o.a)+'</div>'+
+   '</div>').join('')+
  '</div>';
 
  h+='<div class="sect">🧠 Психологія та стійкість</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;max-width:900px;margin-bottom:8px">'+
@@ -992,6 +1033,7 @@ function viewTeam(){
    '<div class="tstat"><b style="color:var(--green)">'+(hide?'—':money(s.income))+'</b><span>₴ дохід</span></div>'+
    '<div class="tstat"><b>'+s.conv+'%</b><span>конверсія</span></div>'+
    '<div class="tstat"><b>'+s.tOpen+'/'+s.tDone+'</b><span>задачі</span></div>'+
+   '<div class="tstat"><b>🎓 '+(s.m.academy_stage||1)+'/3</b><span>академія</span></div>'+
    '<button class="btn sm dng" data-delmember="'+s.m.id+'">Видалити</button></div>';
  }).join('');
  $('content').innerHTML=h;
@@ -1252,6 +1294,8 @@ $('content').addEventListener('click',e=>{
  const td=e.target.closest('[data-tdone]');if(td){const x=state.tasks.find(t=>t.id===td.dataset.tdone);if(x){x.status=td.checked?'done':'todo';Backend.saveTask(x);renderSidebar();rerender();}return;}
  const ac=e.target.closest('[data-acad]');if(ac){toggleAcademyStep(ac.dataset.acad);return;}
  const oq=e.target.closest('[data-openquiz]');if(oq){openQuiz(+oq.dataset.openquiz);return;}
+ if(e.target.closest('[data-showcert]')){showCertificate();return;}
+ const fl=e.target.closest('[data-flip]');if(fl){const a=fl.querySelector('.obj-a');if(a)a.classList.toggle('hidden');return;}
  const dt=e.target.closest('[data-deltask]');if(dt){const id=dt.dataset.deltask;state.tasks=state.tasks.filter(t=>t.id!==id);Backend.delTask(id);renderSidebar();rerender();return;}
  const am=e.target.closest('#addMemberBtn');if(am){const inp=$('newMemberName');if(inp.value.trim()){const mm={id:uuid(),name:inp.value.trim(),color:PALETTE[state.members.length%PALETTE.length],pin:''};state.members.push(mm);Backend.saveMember(mm);renderMe();rerenderAll();toast('Учасника додано');}return;}
  const dm=e.target.closest('[data-delmember]');if(dm){if(confirm('Видалити учасника? Його ліди/задачі лишаться, але без виконавця.')){const id=dm.dataset.delmember;state.members=state.members.filter(m=>m.id!==id);Backend.delMember(id);if(me===id){me='';localStorage.removeItem('crm_me');}renderMe();rerenderAll();}return;}
