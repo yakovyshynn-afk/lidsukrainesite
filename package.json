@@ -1,0 +1,13 @@
+{
+  "name": "lidsukrainesite-ci",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Не бібліотека для деплою — лише інструменти для перевірки index.html перед мержем (синтаксис + димовий тест у браузері). Сам сайт лишається одним статичним index.html, як і був, без збірки.",
+  "scripts": {
+    "check:syntax": "node tests/check-syntax.js",
+    "test": "node tests/check-syntax.js && playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0"
+  }
+}
